@@ -233,7 +233,7 @@ class GamesDatabase
         if ret.length > 1
             (1..(ret.length-1)).each do |i|
                 assert(ret[i][:position] >= ret[i-1][:position], 'Positions in return value are not monotonic')
-                assert(ret[i][:score] >= ret[i-1][:score], 'Scores in return value are not monotonic')
+                assert(ret[i][:score] <= ret[i-1][:score], 'Scores in return value are not monotonic')
             end
         end
     end
