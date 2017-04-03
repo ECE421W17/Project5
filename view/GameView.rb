@@ -6,11 +6,16 @@ require_relative '../model/otto_n_toot.rb'
 require_relative '../model/victory'
 require_relative '../controller/controller'
 
-class OttoNTootView
+class GameView
 
 
   T = "T"
   O = "O"
+
+  def check_class_invariants
+    assert(@builder, "There must be a gtk builder to display UI")
+    assert(@controller, "There must be a controller")
+  end
 
   def initialize
 
@@ -24,7 +29,7 @@ class OttoNTootView
 
       @builder = Gtk::Builder::new
 #http://ruby-gnome2.sourceforge.jp/hiki.cgi?Gtk%3A%3ABuilder
-      @builder.add_from_file("otto_n_toot.glade")
+      @builder.add_from_file("game.glade")
      # @builder.connect_signals{ |handler| method(handler) }  # (No handlers yet, but I will have eventually)
 
 
@@ -83,6 +88,7 @@ class OttoNTootView
       window.show()
       Gtk.main()
     end
+    check_class_invariants
   end
 
 
@@ -97,6 +103,7 @@ class OttoNTootView
       # @t = 0
       # @o = 1
       # @turn = @t
+      check_class_invariants
   end
 
 
@@ -134,6 +141,7 @@ class OttoNTootView
     #     popup ("Player T is the winner")
     #   end
     # end
+    check_class_invariants
   end
 
 
@@ -153,6 +161,7 @@ class OttoNTootView
     dialog.run
     dialog.destroy
 
+    check_class_invariants
   end
 
 
@@ -182,6 +191,7 @@ class OttoNTootView
       # end
       popup("Player placing " + winner.winner.category + " to get pattern " + winner.winner.pattern + " has won!")
     end
+    check_class_invariants
   end
 
 
@@ -193,7 +203,7 @@ class OttoNTootView
 end
 
 
-hello = OttoNTootView.new
+hello = GameView.new
 
 #References
 #http://ruby-gnome2.sourceforge.jp/hiki.cgi?tut-gtk2-dynui-bui#Creating+the+Window
