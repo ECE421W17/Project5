@@ -13,8 +13,8 @@ class GamesDatabase
     def check_class_invariants
         assert(@stopped_cache, 'There must be a stopped games cache')
         assert(@result_cache, 'There must be a games results cache')
-        assert(@stopped_cache.all? { |o| o.type == :STOP}, 'All data object in stopped cache must be of type STOP')
-        assert(@stopped_cache.all? { |o| o.type == :RESULT}, 'All data objects in results cache must be of type RESULT')
+        assert(@stopped_cache.each_value.all? { |o| o.type == :STOP}, 'All data objects in stopped cache must be of type STOP')
+        assert(@stopped_cache.each_value.all? { |o| o.type == :RESULT}, 'All data objects in results cache must be of type RESULT')
     end
 
     def initialize_pre_cond
@@ -25,8 +25,8 @@ class GamesDatabase
 
     def initialize
         initialize_pre_cond
-        @stopped_cache = []
-        @result_cache = []
+        @stopped_cache = {}
+        @result_cache = {}
         # TODO
         load_from_files
         initialize_post_cond
@@ -129,21 +129,76 @@ class GamesDatabase
         check_class_invariants
     end
 
+    def query_pre_cond(query_hash)
+        valid_query_hash(query_hash)
+    end
+
+    def query_post_cond(query_hash, ret)
+        ret.each do |obj|
+            assert(query_hash.each_pair.all? {|k,v| obj.key?(k) && obj[k] == v},
+            "Object in return value #{obj} doesn't match query")
+        end
+    end
+
     def query(query_hash)
+        query_pre_cond(query_hash)
         # TODO
+        ret = [query_hash]
+        query_post_cond(query_hash, ret)
+        check_class_invariants
+    end
+
+    def aggregate_query_pre_cond(query_hash, field, func)
+        valid_query_hash(query_hash)
+        assert(func.arity == 2, 'Aggregating function must be binary')
+    end
+
+    def aggregate_query_post_cond(query_hash, field, func, ret)
+        assert(query_hash.each_pair.all? {|k,v| ret.key?(k) && ret[k] == v},
+               "Object in return value #{ret} doesn't match query")
+        assert(ret.key?(:result), 'The return value should have a :result field')
     end
 
     def aggregate_query(query_hash, field, &aggregating_function)
+        aggregate_query_pre_cond(query_hash, field, aggregating_function)
         # TODO
+        ret = query_hash.merge({:result => 0})
+        aggregate_query_post_cond(query_hash, field, aggregating_function, ret)
+    end
+
+    def top_players_pre_cond(n)
+        assert(n.respond_to?(:to_i), 'The number of players must be convertible to integer')
+        assert(n.to_i > 0, 'The number of player must be greater than zero')
+    end
+
+    def top_players_post_cond(n, ret)
+        assert(ret.length <= n, 'The number of objects in result must match n')
+        ret.each do |obj|
+            assert(obj.key?(:position), "Object #{obj} must have a position")
+            assert(obj.key?(:player), "Object #{obj} must have a player field")
+            assert(obj.key?(:score), "Object #{obj} must have a score field")
+        end
+
+        if ret.length > 1
+            (1..(ret.length-1)).each do |i|
+                assert(ret[i][:position] >= ret[i-1][:position], 'Positions in return value are not monotonic')
+                assert(ret[i][:score] >= ret[i-1][:score], 'Scores in return value are not monotonic')
+            end
+        end
     end
 
     def top_players(n)
-        # TODO
+        top_players_pre_cond(n)
         # pre-made query that returns the top n players and their scores
+        # TODO
+        ret = []
+        top_players_post_cond(n, ret)
     end
 
     private
+
     def valid_query_hash(query_hash)
         assert(query_hash.respond_to?(:[]), 'Query must respond to square bracket operator')
+        assert(query_hash.respond_to?(:each_pair), 'Query must be enumerable by pairs')
     end
 end
