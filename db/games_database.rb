@@ -1,4 +1,7 @@
-require 'xmlrpc/server'
+require 'file'
+
+require 'test/unit/assertions'
+include Test::Unit::Assertions
 
 class GamesDatabase
 
@@ -8,25 +11,57 @@ class GamesDatabase
     GAME_RESULT_FILE = 'game_result.json'
 
     def check_class_invariants
+        assert(@stopped_cache, 'There must be a stopped games cache')
+        assert(@result_cache, 'There must be a games results cache')
+        assert(@stopped_cache.all? { |o| o.type == :STOP}, 'All data object in stopped cache must be of type STOP')
+        assert(@stopped_cache.all? { |o| o.type == :RESULT}, 'All data objects in results cache must be of type RESULT')
+    end
 
+    def initialize_pre_cond
+    end
+
+    def initialize_post_cond
     end
 
     def initialize
-        @queue = Queue.new
-        @server = XMLRPC::Server.new(8080)
-        @stopped_cache = nil
-        @result_cache = nil
+        initialize_pre_cond
+        @stopped_cache = []
+        @result_cache = []
         # TODO
-        # spawn thread with server serving request
         load_from_files
+        initialize_post_cond
+        check_class_invariants
+    end
+
+    def load_from_files_pre_cond
+    end
+
+    def load_from_files_post_cond
     end
 
     def load_from_files
+        load_from_files_pre_cond
         # TODO
+        # Creates the files if they don't exist
+        load_from_files_post_cond
+        check_class_invariants
+    end
+
+    def store_to_files_pre_cond
+        assert(File.exist?(STOPPED_GAME_FILE), 'There must a file for stopped games')
+        assert(File.exist?(GAME_RESULT_FILE), 'There must a file for game results')
+        assert(File.writable?(STOPPED_GAME_FILE), 'File for stopped games must be writable')
+        assert(File.writable?(GAME_RESULT_FILE), 'File for game results must be writable')
+    end
+
+    def store_to_files_post_cond
     end
 
     def store_to_files
+        store_to_files_pre_cond
         # TODO
+        store_to_files_post_cond
+        check_class_invariants
     end
 
     def create(new_object)
@@ -38,13 +73,12 @@ class GamesDatabase
         # Also does creation
     end
 
-    def delete
-
+    def delete(id)
+        # TODO
     end
 
-    def commit
-        # TODO: implement
-        # Stores caches in files
+    def delete_if(query_hash)
+        # TODO
     end
 
     def query(query_hash)
