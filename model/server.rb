@@ -4,7 +4,7 @@ class Server
 
 	def initialize_pre_cond(hostname, portNumber)
 		assert(IPAddress.valid? hostname, "hostname is not an ip")
-		assert(portNumber:to_i, "portNumber must be a integer")
+		assert(portNumber.respond_to?(:to_i), "portNumber must be a integer")
 		assert(portNumber > 0, "portNumber must be greater than zero")
 	end
 
