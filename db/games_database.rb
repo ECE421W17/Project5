@@ -30,22 +30,25 @@ class GamesDatabase
 
     def register_game_server(address)
         register_game_server_pre_cond(address)
-        # TODO
+
+        create(:SERVER, {:address => address})
+
         register_game_server_post_cond(address)
         check_class_invariants
     end
 
     def remove_game_server(address)
         remove_game_server_pre_cond(address)
-        # TODO
+
+        delete_if(:SERVER, {:address => address})
+
         remove_game_server_post_cond(address)
         check_class_invariants
     end
 
     def available_servers
-        # TODO
         check_class_invariants
-        @cache[:SERVER].values
+        @cache[:SERVER]
     end
 
     def load_from_files
@@ -108,23 +111,33 @@ class GamesDatabase
         check_class_invariants
     end
 
-    def update(id, table, object_content)
+    def update(table, id, object_content)
         update_pre_cond(id, table, object_content)
-        # TODO
+
+        @cache[table] = @cache[table].map do |obj|
+            obj[:id] == id ? obj.merge({:id => id}).merge(object_content) : obj
+        end
+        @dirty = true
+
         update_post_cond(id, table, object_content)
         check_class_invariants
     end
 
-    def delete(id, table)
+    def delete(table, id)
         delete_pre_cond(id, table)
-        # TODO
+
+        delete_if(table, {:id => id})
+
         delete_post_cond(id, table)
         check_class_invariants
     end
 
     def delete_if(table, query_hash)
         delete_if_pre_cond(table, query_hash)
-        # TODO
+
+        @cache[table] = @cache[table].delete_if {|obj| obj.merge(query_hash) == obj}
+        @dirty = true
+
         delete_if_post_cond(table, query_hash)
         check_class_invariants
     end
