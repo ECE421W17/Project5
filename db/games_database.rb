@@ -2,6 +2,7 @@ require 'test/unit/assertions'
 include Test::Unit::Assertions
 
 require 'json'
+require 'set'
 
 class GamesDatabase
 
@@ -13,11 +14,16 @@ class GamesDatabase
 
     def initialize
         initialize_pre_cond
-        @in_progress_cache = {}
-        @result_cache = {}
-        @server_cache = {}
-        # TODO
+
+        @cache = {
+            :PROGRESS => [],
+            :RESULT => [],
+            :SERVER => []
+        }
+
         load_from_files
+        @dirty = false
+
         initialize_post_cond
         check_class_invariants
     end
@@ -39,28 +45,65 @@ class GamesDatabase
     def available_servers
         # TODO
         check_class_invariants
-        @server_cache.values
+        @cache[:SERVER].values
     end
 
     def load_from_files
         load_from_files_pre_cond
-        # TODO
         # Creates the files if they don't exist
+        filenames = [GAME_IN_PROGRESS_FILE, GAME_RESULT_FILE, GAME_SERVER_FILE]
+
+        filenames.zip(TABLES) do |filename, table|
+            File.open(filename, mode = 'a+') do |f|
+                json = f.read
+                @cache[table] = json && json.length >= 2 ? JSON.parse(json, :symbolize_names => true) : []
+            end
+        end
+
         load_from_files_post_cond
         check_class_invariants
     end
 
     def store_to_files
         store_to_files_pre_cond
-        # TODO
+
+        filenames = [GAME_IN_PROGRESS_FILE, GAME_RESULT_FILE, GAME_SERVER_FILE]
+
+        filenames.zip(TABLES) do |filename, table|
+            json_string = JSON.generate(@cache[table])
+            File.open(filename, 'w') do |f|
+                f.write(json_string)
+            end
+        end
+
         store_to_files_post_cond
         check_class_invariants
     end
 
+    def commit
+        store_to_files
+        @dirty = false
+    end
+
+    def generate_new_id(table)
+        keys_in_table = Set.new(query(table, {}).map{|obj| obj[:id]})
+
+        return 0 if keys_in_table.empty?
+
+        keys_in_table.max.times.each do |key|
+            return key unless keys_in_table.include? key
+        end
+
+        keys_in_table.max + 1
+    end
+
     def create(table, new_object)
         create_pre_cond(table, new_object)
-        # TODO
-        id = 0
+
+        id = generate_new_id(table)
+        @cache[table].push(new_object.merge({:id => id}))
+        @dirty = true
+
         create_post_cond(table, new_object, id)
         check_class_invariants
     end
@@ -88,10 +131,14 @@ class GamesDatabase
 
     def query(table, query_hash)
         query_pre_cond(table, query_hash)
-        # TODO
-        ret = []
+
+        commit if @dirty
+        ret = @cache[table].select {|obj| obj.merge(query_hash) == obj }
+
         query_post_cond(table, query_hash, ret)
         check_class_invariants
+
+        ret
     end
 
     def aggregate_query(table, query_hash, field, &aggregating_function)
@@ -112,12 +159,9 @@ class GamesDatabase
     private
 
     def check_class_invariants
-        assert(@in_progress_cache, 'There must be a stopped games cache')
-        assert(@result_cache, 'There must be a games results cache')
-        assert(@server_cache, 'There must be a game server cache')
-        assert(@in_progress_cache.each_value.all? { |o| o[:table] == :PROGRESS}, 'All data objects in stopped cache must be in table STOP')
-        assert(@result_cache.each_value.all? { |o| o[:table] == :RESULT}, 'All data objects in results cache must be in table RESULT')
-        assert(@server_cache.each_value.all? { |o| o[:table] == :SERVER}, 'All data objects in servers cache must be in table SERVER')
+        assert(@cache[:PROGRESS], 'There must be a stopped games cache')
+        assert(@cache[:RESULT], 'There must be a games results cache')
+        assert(@cache[:SERVER], 'There must be a game server cache')
     end
 
     def initialize_pre_cond
