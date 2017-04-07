@@ -156,17 +156,35 @@ class GamesDatabase
 
     def aggregate_query(table, query_hash, field, &aggregating_function)
         aggregate_query_pre_cond(table, query_hash, field, aggregating_function)
-        # TODO
-        ret = query_hash.merge({:result => 0})
+
+        values = query(table, query_hash).map {|obj| obj[field]}
+        ret = values.reduce {|a,b| aggregating_function.call(a,b)}
+
         aggregate_query_post_cond(table, query_hash, field, aggregating_function, ret)
+        ret
+    end
+
+    def games_won_by(player)
+        as_p1 = query(:RESULT, {:p1 => player, :winner => :p1})
+        as_p2 = query(:RESULT, {:p2 => player, :winner => :p2})
+        as_p1 + as_p2
     end
 
     def top_players(n)
         top_players_pre_cond(n)
         # pre-made query that returns the top n players and their scores
-        # TODO
-        ret = []
+
+        all_players = query(:RESULT, {}).flat_map{|obj| [obj[:p1], obj[:p2]]}.uniq
+
+        nbr_wins = all_players.map {|player| [player, games_won_by(player).length]}
+
+        top_n = nbr_wins.sort_by {|rank| -rank[1]}.take n
+
+        ret = n.times.zip(top_n).map {|_, rank| rank ? {:player => rank[0], :score => rank[1]} : nil}
+
         top_players_post_cond(n, ret)
+
+        ret
     end
 
     private
@@ -268,10 +286,7 @@ class GamesDatabase
     end
 
     def aggregate_query_post_cond(table, query_hash, field, func, ret)
-        valid_table(table)
-        assert(query_hash.each_pair.all? {|k,v| ret.key?(k) && ret[k] == v},
-               "Object in return value #{ret} doesn't match query")
-        assert(ret.key?(:result), 'The return value should have a :result field')
+        assert(ret, 'The aggregate query should have a result')
     end
 
     def top_players_pre_cond(n)
@@ -281,15 +296,14 @@ class GamesDatabase
 
     def top_players_post_cond(n, ret)
         assert(ret.length <= n, 'The number of objects in result must match n')
+        ret = ret.select {|obj| obj}
         ret.each do |obj|
-            assert(obj.key?(:position), "Object #{obj} must have a position")
             assert(obj.key?(:player), "Object #{obj} must have a player field")
             assert(obj.key?(:score), "Object #{obj} must have a score field")
         end
 
         if ret.length > 1
             (1..(ret.length-1)).each do |i|
-                assert(ret[i][:position] >= ret[i-1][:position], 'Positions in return value are not monotonic')
                 assert(ret[i][:score] <= ret[i-1][:score], 'Scores in return value are not monotonic')
             end
         end

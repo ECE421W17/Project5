@@ -38,6 +38,49 @@ class TestGamesDatabase
         q5 = db.query(:RESULT, {})
         assert_empty(q5)
     end
+
+    def self.test_aggregate
+        # This test assumes empty files
+        db = GamesDatabase.new
+
+        db.create(:RESULT, {:p1 => 'joe', :score => 100})
+        db.create(:RESULT, {:p1 => 'joe', :score => 20})
+        db.create(:RESULT, {:p1 => 'jack', :score => 5})
+
+        joe_result = db.aggregate_query(:RESULT, {:p1 => 'joe'}, :score) {|s1, s2| s1 + s2}
+        jack_result = db.aggregate_query(:RESULT, {:p1 => 'jack'}, :score) {|s1, s2| s1 + s2}
+
+        assert(joe_result == 120)
+        assert(jack_result == 5)
+
+        db.delete_if(:RESULT, {})
+    end
+
+    def self.test_top_n
+        # This test assumes empty files
+        db = GamesDatabase.new
+
+        db.create(:RESULT, {:p1 => 'joe', :p2 => 'bob', :winner => :p1})
+        db.create(:RESULT, {:p1 => 'joe', :p2 => 'john', :winner => :p1})
+        db.create(:RESULT, {:p1 => 'jack', :p2 => 'john', :winner => :p2})
+        db.create(:RESULT, {:p1 => 'joe', :p2 => 'bob'})
+        db.create(:RESULT, {:p1 => 'jack', :p2 => 'bob', :winner => :p1})
+        db.create(:RESULT, {:p1 => 'joe', :p2 => 'john', :winner => :p2})
+        db.create(:RESULT, {:p1 => 'jack', :p2 => 'john', :winner => :p2})
+
+        expected = [
+            {:player => 'john', :score => 3},
+            {:player => 'joe', :score => 2},
+            {:player => 'jack', :score => 1},
+            {:player => 'bob', :score => 0},
+            nil, nil, nil, nil, nil, nil
+        ]
+
+        q1 = db.top_players(10)
+        db.delete_if(:RESULT, {}) # clean files
+
+        assert(q1 == expected)
+    end
 end
 
-TestGamesDatabase.test_crud
+TestGamesDatabase.test_top_n
