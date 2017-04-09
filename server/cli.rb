@@ -1,3 +1,4 @@
+require 'pp' # TODO: Remove?
 require 'xmlrpc/client'
 
 require_relative 'game_client'
@@ -9,15 +10,22 @@ class CLI
 
         launch_local_game_server
 
-        @client = GameClient.new
+        # TODO: Extract address to global scope
+        @client = GameClient.new({:game_server_ip => '127.0.0.1', :game_server_port => 8080})
     end
 
     def launch_local_game_server
         pid = Process.fork do
             puts 'In new process...'
 
-            gs = GameServer.new
+            # TODO: Extract address to global scope
+            gs = GameServer.new({:games_database_ip => '127.0.0.1', :games_database_port => 9000,
+                :game_server_port => 8080})
             gs.serve
+        end
+
+        if pid != 0
+            return
         end
     end
 
@@ -30,33 +38,10 @@ class CLI
         command = command_regex.match(command_string).to_s
         arguments = arguments_regex.match(command_string).to_s.strip
 
-        puts 'Meh'
+        split_integer_args = arguments.split(" ").map { |val| val.to_i }
 
-        puts "Command: #{command}"
-        puts "Arguments: #{arguments}"
-
-        tmp = arguments.split(" ")
-        puts tmp.to_s
-
-        split_integer_args = tmp.map { |val| val.to_i }
-        puts split_integer_args.to_s
-
-        puts 'Here'
-
-        @client.call(command, split_integer_args[0], split_integer_args[1])
-
-        puts 'And here'
-
-        case command_string
-        when 'create-server'
-            puts 'Creating server'
-        when 'ping-server'
-            puts 'Pinging server'
-        when 'ping-db' # ?
-            puts 'Pinging db'
-        when 'send-match-request'
-            puts 'Sending match request'
-        end
+        res = @client.call(command, *split_integer_args)
+        pp res
     end
 
     def run
