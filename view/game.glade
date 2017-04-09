@@ -1,63 +1,79 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.20.0 -->
 <interface>
-  <requires lib="gtk+" version="2.16"/>
-  <!-- interface-naming-policy project-wide -->
+  <requires lib="gtk+" version="3.0"/>
+  <object class="GtkImage" id="image1">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="stock">gtk-missing-image</property>
+  </object>
   <object class="GtkWindow" id="window1">
+    <property name="can_focus">False</property>
     <property name="title" translatable="yes">Otto N Toot</property>
-    <signal name="destroy" handler="gtk_main_quit"/>
+    <signal name="destroy" handler="gtk_main_quit" swapped="no"/>
     <child>
       <object class="GtkTable" id="table1">
         <property name="visible">True</property>
+        <property name="can_focus">False</property>
         <property name="n_rows">7</property>
         <property name="n_columns">7</property>
         <child>
           <object class="GtkMenuBar" id="menubar1">
             <property name="visible">True</property>
+            <property name="can_focus">False</property>
             <child>
               <object class="GtkMenuItem" id="menuitem1">
                 <property name="visible">True</property>
+                <property name="can_focus">False</property>
                 <property name="label" translatable="yes">_Game</property>
                 <property name="use_underline">True</property>
                 <child type="submenu">
                   <object class="GtkMenu" id="menu1">
                     <property name="visible">True</property>
+                    <property name="can_focus">False</property>
                     <child>
                       <object class="GtkMenuItem" id="menuitem2">
-                        <property name="label">New 1 Player Connect4</property>
                         <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label">New 1 Player Connect4</property>
                         <property name="use_underline">True</property>
                       </object>
                     </child>
                     <child>
                       <object class="GtkMenuItem" id="menuitem3">
-                        <property name="label">New 2 Player Connect4</property>
                         <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label">New 2 Player Connect4</property>
                         <property name="use_underline">True</property>
                       </object>
                     </child>
                     <child>
                       <object class="GtkMenuItem" id="menuitem5">
-                        <property name="label">New 1 Player OttoNToot</property>
                         <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label">New 1 Player OttoNToot</property>
                         <property name="use_underline">True</property>
                       </object>
                     </child>
                     <child>
                       <object class="GtkMenuItem" id="menuitem6">
-                        <property name="label">New 2 Player OttoNToot</property>
                         <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label">New 2 Player OttoNToot</property>
                         <property name="use_underline">True</property>
                       </object>
                     </child>
                     <child>
                       <object class="GtkSeparatorMenuItem" id="separatormenuitem1">
                         <property name="visible">True</property>
+                        <property name="can_focus">False</property>
                       </object>
                     </child>
                     <child>
                       <object class="GtkImageMenuItem" id="imagemenuitem5">
                         <property name="label">gtk-quit</property>
                         <property name="visible">True</property>
+                        <property name="can_focus">False</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
                       </object>
@@ -67,17 +83,88 @@
               </object>
             </child>
             <child>
+              <object class="GtkMenuItem" id="Top10LeaderBoardMenuItm">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Top 10</property>
+                <property name="use_underline">True</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem" id="LeaderBoardMenu">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Leader Board</property>
+                <property name="use_underline">True</property>
+                <child type="submenu">
+                  <object class="GtkMenu">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkMenuItem" id="CustomizeLeaderBoardMenuItm">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Customize</property>
+                        <property name="use_underline">True</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem" id="HostoryMenu">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">View History</property>
+                <property name="use_underline">True</property>
+                <child type="submenu">
+                  <object class="GtkMenu">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkMenuItem" id="ViewHistoryAllMenuItem">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">All</property>
+                        <property name="use_underline">True</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="ViewHistoryFinishedMenuItem">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Finished Game</property>
+                        <property name="use_underline">True</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="ViewHistoryUnfinishedMenuItem">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Unfinish Game</property>
+                        <property name="use_underline">True</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
               <object class="GtkMenuItem" id="menuitem4">
                 <property name="visible">True</property>
+                <property name="can_focus">False</property>
                 <property name="label" translatable="yes">_Help</property>
                 <property name="use_underline">True</property>
                 <child type="submenu">
                   <object class="GtkMenu" id="menu3">
                     <property name="visible">True</property>
+                    <property name="can_focus">False</property>
                     <child>
                       <object class="GtkImageMenuItem" id="imagemenuitem10">
                         <property name="label">Instructions</property>
                         <property name="visible">True</property>
+                        <property name="can_focus">False</property>
                         <property name="image">image1</property>
                         <property name="use_stock">False</property>
                       </object>
@@ -88,10 +175,7 @@
             </child>
           </object>
           <packing>
-            <property name="left_attach">0</property>
             <property name="right_attach">7</property>
-            <property name="top_attach">0</property>
-            <property name="bottom_attach">1</property>
           </packing>
         </child>
         <child>
@@ -102,8 +186,6 @@
             <property name="receives_default">True</property>
           </object>
           <packing>
-            <property name="left_attach">0</property>
-            <property name="right_attach">1</property>
             <property name="top_attach">1</property>
             <property name="bottom_attach">2</property>
           </packing>
@@ -200,8 +282,6 @@
             <property name="receives_default">True</property>
           </object>
           <packing>
-            <property name="left_attach">0</property>
-            <property name="right_attach">1</property>
             <property name="top_attach">2</property>
             <property name="bottom_attach">3</property>
           </packing>
@@ -298,8 +378,6 @@
             <property name="receives_default">True</property>
           </object>
           <packing>
-            <property name="left_attach">0</property>
-            <property name="right_attach">1</property>
             <property name="top_attach">3</property>
             <property name="bottom_attach">4</property>
           </packing>
@@ -396,8 +474,6 @@
             <property name="receives_default">True</property>
           </object>
           <packing>
-            <property name="left_attach">0</property>
-            <property name="right_attach">1</property>
             <property name="top_attach">4</property>
             <property name="bottom_attach">5</property>
           </packing>
@@ -494,8 +570,6 @@
             <property name="receives_default">True</property>
           </object>
           <packing>
-            <property name="left_attach">0</property>
-            <property name="right_attach">1</property>
             <property name="top_attach">5</property>
             <property name="bottom_attach">6</property>
           </packing>
@@ -592,8 +666,6 @@
             <property name="receives_default">True</property>
           </object>
           <packing>
-            <property name="left_attach">0</property>
-            <property name="right_attach">1</property>
             <property name="top_attach">6</property>
             <property name="bottom_attach">7</property>
           </packing>
@@ -682,17 +754,7 @@
             <property name="bottom_attach">7</property>
           </packing>
         </child>
-        <child>
-          <placeholder/>
-        </child>
-        <child>
-          <placeholder/>
-        </child>
       </object>
     </child>
-  </object>
-  <object class="GtkImage" id="image1">
-    <property name="visible">True</property>
-    <property name="stock">gtk-missing-image</property>
   </object>
 </interface>
