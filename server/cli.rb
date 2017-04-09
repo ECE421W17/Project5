@@ -55,6 +55,3 @@ class CLI
         end
     end
 end
-
-cli = CLI.new
-cli.run

@@ -5,44 +5,117 @@ include Test::Unit::Assertions
 
 # TODO: Implement
 class GameServerHandler
-    def initialize(games_database_client)
+    # *****
+    # Local functions:
+    def initialize(games_database_client, screen_name)
         @games_database_server_handler_proxy = games_database_client.proxy("gamesDatabaseServerHandler")
+        @screen_name = screen_name
+        @incoming_challenges = []
+        @outgoing_challenges = {}
     end
 
-    # TODO: Remove
-    # gameServerHandler.sumAndDifference 10 5 - test
-    def sumAndDifference(a, b)
-        { "sum" => a + b, "difference" => a - b }
+    # Returns true if challenge successfully delivered, false otherwise
+    def challenge_player_with_screen_name(screen_name, game_type)
+        # Find the server with that screen name (if it exists - what if it doesn't')
+        # Call the RPC function
+
+        # TODO: Move these preliminary checks to pre-conditions
+        unless @outgoing_challenges.has_key?(screen_name)
+            # TODO: Raise exception instead?
+            return false
+        end
+        
+        available_game_server_ips = _get_available_game_server_ips
+        available_game_server_ips.each { |game_server_ip|
+            ip, port = game_server_ip.split(':')
+            port = port.to_i
+
+            # TODO: Catch timeout exception
+            # TODO: Should REALLY be storing these clients in a list, rather than reconnecting every time
+            proxy = GameClient.new({:game_server_ip => ip, :game_server_port => port})
+                .proxy("gameServerHandler")
+            if proxy.get_screen_name == screen_name
+                if proxy.process_challenge(@screen_name)
+                    @outgoing_challenges[screen_name] = game_type
+                    return true
+                end
+            end
+        }
+
+        return false
     end
 
-    # gameServerHandler.get_server_ips
-    def get_server_ips
-        # @games_database_client.call("gamesDatabase.available_servers")
+    def get_challenges
+        @incoming_challenges
+    end
+
+    # Returns true if challenge was successfully accepted, false otherwise
+    def accept_challenge(other_screen_name)
+        unless @incoming_challenges.include? other_screen_name
+            # TODO: Raise exception instead?
+            return false
+        end
+
+        available_game_server_ips = _get_available_game_server_ips
+        available_game_server_ips.each { |game_server_ip|
+            ip, port = game_server_ip.split(':')
+            port = port.to_i
+
+            # TODO: Catch timeout exception
+            proxy = GameClient.new({:game_server_ip => ip, :game_server_port => port})
+                .proxy("gameServerHandler")
+            if proxy.get_screen_name == screen_name
+                if proxy.process_accepted_challenge(@screen_name)
+                    @incoming_challenges.delete(other_screen_name)
+
+                    # TODO: ... Something... Set up game
+
+                    return true
+                end
+            end
+        }
+    end
+
+    def make_move(game_id, column_id)
+
+    end
+    # *****
+
+    # *****
+    # Remote functions:
+    def get_screen_name
+        @screen_name
+    end
+
+    def process_challenge(other_screen_name)
+        if @incoming_challenges.include? other_screen_name
+            return false
+        end
+
+        @incoming_challenges.push(other_screen_name)
+        return true
+    end
+
+    def process_accepted_challenge(other_screen_name)
+        unless @outgoing_challenges.has_key? other_screen_name
+            return false
+        end
+
+        game_type = @outgoing_challenges[other_screen_name]
+
+        # TODO: ... Something... Set up game
+
+        return true
+    end
+    # *****
+
+    def _get_available_game_server_ips
         @games_database_server_handler_proxy.get_game_server_ips
     end
 
-    # TODO: Remove comment, test
-    # gameServerHandler.register_server 127.0.0.1 8080
-    def register_server(game_server_ip, game_server_port)
-        puts 'In register_server'
-
-        # @games_database_client.call(
-        #     "gamesDatabase.register_game_server", "#{game_server_ip}:#{game_server_port}")
-        @games_database_server_handler_proxy.register_game_server(
-            "#{game_server_ip}:#{game_server_port}")
-    end
-
-    # gameServerHandler.unregister_server 127.0.0.1 8080
-    def unregister_server(game_server_ip, game_server_port)
-        # @games_database_client.call(
-        #     "gamesDatabase.remove_game_server", "#{game_server_ip}:#{game_server_port}")
-        @games_database_server_handler_proxy.unregister_game_server(
-            "#{game_server_ip}:#{game_server_port}")
-    end
-
+    # TODO: Remvoe? Uneeded?
     def _verify_initialize_pre_conditions
     end
-
     def _verify_initialize_post_conditions
     end
 end
@@ -68,6 +141,11 @@ class GameServer
     end
 
     def serve
+        # TODO: Ensure screen name is not already taken...
+        # -> What if there are issues contacting one of the servers?
+        # -> Could make the assumption (for now) that all usernames are unique
+        # -> If the screen name is not unique, you could just kill the server...
+
         puts 'Serving'
 
         @games_database_client.call("gamesDatabaseServerHandler.register_game_server",
