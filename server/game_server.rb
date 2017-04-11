@@ -1,109 +1,209 @@
+require 'json' # TODO: Remove?
+require 'securerandom' # TODO: Remove?
 require 'test/unit/assertions'
 require 'xmlrpc/server'
 
+require_relative '../controller/new_controller' # TODO: Rename
+
 include Test::Unit::Assertions
+
+# TODO: Remove?
+class MockView
+    def update(positions, victory)
+    end
+end
 
 # TODO: Implement
 class GameServerHandler
     # *****
     # Local functions:
     def initialize(games_database_client, screen_name)
+        _verify_initialize_pre_conditions(screen_name)
+
         @games_database_server_handler_proxy = games_database_client.proxy("gamesDatabaseServerHandler")
         @screen_name = screen_name
-        @incoming_challenges = []
-        @outgoing_challenges = {}
+
+        @incoming_challenges = {}
+        @outgoing_challenges = []
+
+        @game_controller_map = {}
+        @make_move_callback_map = {}
+
+        _verify_initialize_post_conditions
     end
 
-    # Returns true if challenge successfully delivered, false otherwise
-    def challenge_player_with_screen_name(screen_name, game_type)
-        # Find the server with that screen name (if it exists - what if it doesn't')
-        # Call the RPC function
+    # Returns a controller if challenge was successfully delivered, false otherwise
+    def challenge_player_with_screen_name(views, game_type, screen_name)
+    # def challenge_player_with_screen_name(views, game_type)
+        # return true
 
-        # TODO: Move these preliminary checks to pre-conditions
-        unless @outgoing_challenges.has_key?(screen_name)
-            # TODO: Raise exception instead?
-            return false
-        end
-        
+        puts "Here 1"
+
+        _verify_challenge_player_with_screen_name_preconditions(screen_name)
+
+        puts "Here 2"
+
+        controller = nil
+        game_uuid = SecureRandom.uuid
+
         available_game_server_ips = _get_available_game_server_ips
         available_game_server_ips.each { |game_server_ip|
-            ip, port = game_server_ip.split(':')
+            ip, port = game_server_ip["address"].split(':')
             port = port.to_i
 
+            puts "Here 3"
+
             # TODO: Catch timeout exception
-            # TODO: Should REALLY be storing these clients in a list, rather than reconnecting every time
+            # TODO: Should be storing these clients in a list, rather than reconnecting every time?
             proxy = GameClient.new({:game_server_ip => ip, :game_server_port => port})
                 .proxy("gameServerHandler")
-            if proxy.get_screen_name == screen_name
-                if proxy.process_challenge(@screen_name)
-                    @outgoing_challenges[screen_name] = game_type
-                    return true
+
+            puts "#{@screen_name} vs. #{screen_name}"
+
+            remote_screen_name = proxy.get_screen_name
+
+            puts "remote: #{remote_screen_name}"
+
+            if remote_screen_name == @screen_name
+                next
+            end
+
+            if remote_screen_name == screen_name
+                puts "Here 4"
+
+                if proxy.process_challenge(@screen_name, game_uuid)
+                    puts "Here 5"
+
+                    @outgoing_challenges.push(screen_name)
+
+                    mv = MockView.new
+                    controller = Controller.new([mv], game_type, 2)
+
+                    @make_move_callback_map[game_uuid] = lambda { |column_id|
+                        controller.other_player_update_model(column_id)
+                    }
+
+                    break
                 end
             end
         }
 
-        return false
+        puts "Here 6"
+
+        @game_controller_map[game_uuid] = controller
+
+        _verify_challenge_player_with_screen_name_postconditions
+
+        puts "Here 7"
+
+        # return controller
+
+        return_val = controller.nil? ? false : controller.to_json
+        puts "Returning: #{return_val}"
+
+        return return_val # TODO: Change?
     end
 
-    def get_challenges
+    def get_incoming_challenges
         @incoming_challenges
     end
 
-    # Returns true if challenge was successfully accepted, false otherwise
-    def accept_challenge(other_screen_name)
-        unless @incoming_challenges.include? other_screen_name
-            # TODO: Raise exception instead?
-            return false
-        end
+    def get_online_players
+        players = []
 
         available_game_server_ips = _get_available_game_server_ips
         available_game_server_ips.each { |game_server_ip|
-            ip, port = game_server_ip.split(':')
+            ip, port = game_server_ip["address"].split(':')
             port = port.to_i
 
             # TODO: Catch timeout exception
             proxy = GameClient.new({:game_server_ip => ip, :game_server_port => port})
                 .proxy("gameServerHandler")
-            if proxy.get_screen_name == screen_name
+            players.push(proxy.get_screen_name)
+        }
+
+        return players
+    end
+
+    # Returns a controller if challenge was successfully accepted, false otherwise
+    def accept_challenge(views, game_type, other_screen_name)
+        _verify_accept_challenge_preconditions(other_screen_nam)
+
+        controller = nil
+
+        available_game_server_ips = _get_available_game_server_ips
+        available_game_server_ips.each { |game_server_ip|
+            ip, port = game_server_ip["address"].split(':')
+            port = port.to_i
+
+            # TODO: Catch timeout exception
+            proxy = GameClient.new({:game_server_ip => ip, :game_server_port => port})
+                .proxy("gameServerHandler")
+            
+            remote_screen_name = proxy.get_screen_name
+
+            if remote_screen_name == @screen_name
+                next
+            end
+
+            if remote_screen_name == screen_name
                 if proxy.process_accepted_challenge(@screen_name)
                     @incoming_challenges.delete(other_screen_name)
 
-                    # TODO: ... Something... Set up game
+                    controller = Controller.new(views, game_type, 1)
 
-                    return true
+                    @make_move_callback_map[game_uuid] = lambda { |column_id|
+                        controller.other_player_update_model(column_id)
+                    }
                 end
             end
         }
-    end
 
-    def make_move(game_id, column_id)
+        @game_controller_map[game_uuid] = controller
 
+        _verify_accept_challenge_postconditions
+
+        # return controller
+        return controller.nil? ? false : controller # TODO: Change?
     end
     # *****
 
     # *****
     # Remote functions:
     def get_screen_name
-        @screen_name
+        puts "In get screen name (#{@screen_name})"
+
+        return @screen_name
     end
 
-    def process_challenge(other_screen_name)
-        if @incoming_challenges.include? other_screen_name
+    def process_challenge(other_screen_name, game_uuid)
+        puts "Processing challenge"
+
+        unless !@incoming_challenges.has_key? other_screen_name
             return false
         end
 
-        @incoming_challenges.push(other_screen_name)
+        @incoming_challenges[other_screen_name] = game_uuid
+
         return true
     end
 
     def process_accepted_challenge(other_screen_name)
-        unless @outgoing_challenges.has_key? other_screen_name
+        unless @outgoing_challenges.include? other_screen_name
             return false
         end
 
-        game_type = @outgoing_challenges[other_screen_name]
+        @outgoing_challenges.delete(other_screen_name)
 
-        # TODO: ... Something... Set up game
+        return true
+    end
+
+    def process_move(game_uuid, column_id)
+        unless @make_move_callback_map.include? game_uuid
+            return false
+        end
+
+        @make_move_callback_map[game_uuid].call(column_id)
 
         return true
     end
@@ -113,10 +213,30 @@ class GameServerHandler
         @games_database_server_handler_proxy.get_game_server_ips
     end
 
-    # TODO: Remvoe? Uneeded?
-    def _verify_initialize_pre_conditions
+    def _verify_initialize_pre_conditions(screen_name)
+        assert(!screen_name.nil?, 'Screen name cannot be nil')
+        assert(!screen_name.empty?, 'Screen name cannot be empty')
+
+        # TODO: Verify that the screen name is unique among the other servers?
     end
+
     def _verify_initialize_post_conditions
+    end
+
+    def _verify_challenge_player_with_screen_name_preconditions(screen_name)
+        assert(!@outgoing_challenges.include?(screen_name),
+            'There is no outgoing challenge with the given player')
+    end
+
+    def _verify_challenge_player_with_screen_name_postconditions
+    end
+
+    def _verify_accept_challenge_preconditions(other_screen_name)
+        assert(@incoming_challenges.include? other_screen_name,
+            'There is no incoming challenge from the given player')
+    end
+
+    def _verify_accept_challenge_postconditions
     end
 end
 
@@ -128,14 +248,15 @@ class GameServer
         
         games_database_ip = game_server_argument_hash[:games_database_ip].to_s
         games_database_port = game_server_argument_hash[:games_database_port].to_i
-        game_server_port = game_server_argument_hash[:game_server_port].to_i
+        @game_server_port = game_server_argument_hash[:game_server_port].to_i
+        screen_name = game_server_argument_hash[:screen_name].to_s
 
         @games_database_client = XMLRPC::Client.new3(
             {:host => games_database_ip, :port => games_database_port})
 
-        @server = XMLRPC::Server.new(game_server_port)
+        @server = XMLRPC::Server.new(@game_server_port)
         @server.add_handler(
-            "gameServerHandler", GameServerHandler.new(@games_database_client))
+            "gameServerHandler", GameServerHandler.new(@games_database_client, screen_name))
 
         _verify_initialize_post_conditions
     end
@@ -170,6 +291,8 @@ class GameServer
             'No Games Database port address specified')
         assert(game_server_argument_hash.has_key?(:game_server_port),
             'No Game Server port address specified')
+        assert(game_server_argument_hash.has_key?(:screen_name),
+            'No screen name specified')
 
         assert(game_server_argument_hash[:games_database_ip].respond_to? :to_s,
             'The given Games Database IP cannot be converted to a string')
@@ -177,6 +300,8 @@ class GameServer
             'The given Games Database port number cannot be converted to an integer')
         assert(game_server_argument_hash[:game_server_port].respond_to? :to_i,
             'The given Game Server port number cannot be converted to an integer')
+        assert(game_server_argument_hash[:games_database_port].respond_to? :to_s,
+            'The given screen name cannot be converted to a string')
     end
 
     def _verify_initialize_post_conditions

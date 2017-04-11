@@ -20,6 +20,10 @@ class GameClient
         @client.call(path, *args)
     end
 
+    def proxy(path)
+        @client.proxy(path)
+    end
+
     def _verify_initialize_pre_conditions(game_client_argument_hash)
         assert(game_client_argument_hash.has_key?(:game_server_ip),
             'No Game Server IP address specified')
