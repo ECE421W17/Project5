@@ -1,15 +1,46 @@
-require 'json' # TODO: Remove?
+# require 'json' # TODO: Remove?
 require 'securerandom' # TODO: Remove?
 require 'test/unit/assertions'
 require 'xmlrpc/server'
+require 'yaml' # TODO: Remove?
 
 require_relative '../controller/new_controller' # TODO: Rename
 
 include Test::Unit::Assertions
 
+# TODO: Remove? - Try first
+class PlayerMoveObserver
+    def initialize(game_server_ip, game_server_port, game_uuid)
+        @game_server_ip = game_server_ip
+        @game_server_port = game_server_port
+        @game_uuid = game_uuid
+    end
+
+    def update(column_id)
+        proxy = GameClient.new(
+            {:game_server_ip => @game_server_ip, :game_server_port => @game_server_port})
+                .proxy("gameServerHandler")
+
+        proxy.process_move(@game_uuid, column_id)
+    end
+end
+
+class RefreshClient
+    def get_game
+        proxy = GameClient.new(
+            {:game_server_ip => @game_server_ip, :game_server_port => @game_server_port})
+                .proxy("gameServerHandler")
+
+        proxy.process_move(@game_uuid, column_id)
+    end
+end
+
+class RefreshObserver
+
 # TODO: Remove?
 class MockView
     def update(positions, victory)
+        # ...
     end
 end
 
@@ -79,7 +110,13 @@ class GameServerHandler
                     mv = MockView.new
                     controller = Controller.new([mv], game_type, 2)
 
+                    # controller.set_move_proxy(proxy, game_uuid)
+
+                    controller.set_player_move_observer(PlayerMoveObserver.new(ip, port, game_uuid))
+
                     @make_move_callback_map[game_uuid] = lambda { |column_id|
+                        puts 'In callback'
+
                         controller.other_player_update_model(column_id)
                     }
 
@@ -98,7 +135,7 @@ class GameServerHandler
 
         # return controller
 
-        return_val = controller.nil? ? false : controller.to_json
+        return_val = controller.nil? ? false : YAML::dump(controller)
         puts "Returning: #{return_val}"
 
         return return_val # TODO: Change?
@@ -127,14 +164,19 @@ class GameServerHandler
 
     # Returns a controller if challenge was successfully accepted, false otherwise
     def accept_challenge(views, game_type, other_screen_name)
-        _verify_accept_challenge_preconditions(other_screen_nam)
+        _verify_accept_challenge_preconditions(other_screen_name)
 
+        game_uuid = nil
         controller = nil
+
+        puts 'Here 1'
 
         available_game_server_ips = _get_available_game_server_ips
         available_game_server_ips.each { |game_server_ip|
             ip, port = game_server_ip["address"].split(':')
             port = port.to_i
+
+            puts 'Here 2'
 
             # TODO: Catch timeout exception
             proxy = GameClient.new({:game_server_ip => ip, :game_server_port => port})
@@ -142,15 +184,61 @@ class GameServerHandler
             
             remote_screen_name = proxy.get_screen_name
 
+            puts 'Here 3'
+
             if remote_screen_name == @screen_name
                 next
             end
 
-            if remote_screen_name == screen_name
+            puts 'Here 4'
+
+            if remote_screen_name == other_screen_name
+                puts 'Here 5'
+
                 if proxy.process_accepted_challenge(@screen_name)
+                    puts 'Here 6'
+
+                    game_uuid = @incoming_challenges[other_screen_name]
                     @incoming_challenges.delete(other_screen_name)
 
-                    controller = Controller.new(views, game_type, 1)
+                    puts 'Here 7'
+
+                    mv = MockView.new
+                    controller = Controller.new([mv], game_type, 1)
+
+                    # class MoveObserver
+                    #     def update(column_id)
+                    #         available_game_server_ips = _get_available_game_server_ips
+                    #         available_game_server_ips.each { |game_server_ip|
+                    #             ip, port = game_server_ip["address"].split(':')
+                    #             port = port.to_i
+
+                    #             proxy = GameClient.new({:game_server_ip => ip, :game_server_port => port})
+                    #                 .proxy("gameServerHandler")
+                
+                    #             remote_screen_name = proxy.get_screen_name
+
+                    #             if remote_screen_name == @screen_name
+                    #                 next
+                    #             end
+
+                    #             if remote_screen_name == other_screen_name
+                    #                 proxy.process_move(game_uuid, column_id)
+                    #             end
+                    #         }
+                    #     end
+                    # end
+
+
+                    # controller.set_move_observer(MoveObserver.new)
+
+
+                    # controller.set_move_proxy(proxy, game_uuid)
+
+
+                    controller.set_player_move_observer(PlayerMoveObserver.new(ip, port, game_uuid))
+
+                    puts 'Here 8'
 
                     @make_move_callback_map[game_uuid] = lambda { |column_id|
                         controller.other_player_update_model(column_id)
@@ -159,12 +247,16 @@ class GameServerHandler
             end
         }
 
-        @game_controller_map[game_uuid] = controller
+        puts 'Here 9'
+
+        unless game_uuid.nil?
+            @game_controller_map[game_uuid] = controller
+        end
 
         _verify_accept_challenge_postconditions
 
         # return controller
-        return controller.nil? ? false : controller # TODO: Change?
+        return controller.nil? ? false : YAML::dump(controller) # controller # TODO: Change?
     end
     # *****
 
@@ -232,7 +324,7 @@ class GameServerHandler
     end
 
     def _verify_accept_challenge_preconditions(other_screen_name)
-        assert(@incoming_challenges.include? other_screen_name,
+        assert(@incoming_challenges.include?(other_screen_name),
             'There is no incoming challenge from the given player')
     end
 

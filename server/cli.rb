@@ -1,5 +1,6 @@
 require 'pp' # TODO: Remove?
 require 'xmlrpc/client'
+require 'yaml' # TODO: Remove?
 
 require_relative 'game_client'
 require_relative 'game_server'
@@ -51,7 +52,7 @@ class CLI
         # split_integer_args = arguments.split(" ").map { |val| val.to_i }
 
         case command
-        when "accept-incoming-challenge"
+        when "accept-challenge"
             split_arguments = arguments.split(" ")
             if split_arguments.length != 1
                 puts "ERROR: Missing argument(s)"
@@ -59,41 +60,72 @@ class CLI
             end
 
             res = server_proxy.accept_challenge(
-                [MockView.new], :Connect4, split_arguments[0])
-            if res.nil?
-                puts "nil"
-            else
-                puts "non-nil"
-            end
-        when 'challenge-player-connect4'
-            split_arguments = arguments.split(" ")
-            if split_arguments.length != 1
-                puts "ERROR: Missing argument(s)"
-                return
-            end
-
-            tmp_view = MockView.new
-            res = server_proxy.challenge_player_with_screen_name(
                 [], :Connect4, split_arguments[0])
-            
-            res = JSON.parse(res)
+
+            res = YAML::load(res)
 
             puts "Res: #{res}"
 
             mv = MockView.new
             res.add_view(mv)
 
+            @tmp_controller = res
+
             if res.nil?
                 puts "nil"
             else
                 puts "non-nil"
             end
-        when "get-incoming-challenges"
+        when 'challenge-connect4'
+            split_arguments = arguments.split(" ")
+            if split_arguments.length != 1
+                puts "ERROR: Missing argument(s)"
+                return
+            end
+
+            res = server_proxy.challenge_player_with_screen_name(
+                [], :Connect4, split_arguments[0])
+            
+            res = YAML::load(res)
+
+            puts "Res: #{res}"
+
+            mv = MockView.new
+            res.add_view(mv)
+
+            @tmp_controller = res
+
+            if res.nil?
+                puts "nil"
+            else
+                puts "non-nil"
+            end
+        when "get-challenges"
             res = server_proxy.get_incoming_challenges
             pp res
-        when 'list-online-players'
+        when 'list-players'
             res = server_proxy.get_online_players
             pp res
+        when 'make-move'
+            unless !@tmp_controller.nil?
+                raise "ERROR: Controller not initialized"
+            end
+
+            split_arguments = arguments.split(" ")
+            if split_arguments.length != 1
+                puts "ERROR: Missing argument(s)"
+                return
+            end
+
+            column_id = split_arguments[0].to_i
+
+            @tmp_controller.player_update_model(column_id)
+        when 'print-board'
+            unless !@tmp_controller.nil?
+                raise "ERROR: Controller not initialized"
+            end
+
+            puts @tmp_controller.get_game.get_board.to_s
         else
             puts "ERROR: Unrecognized command"
         end
