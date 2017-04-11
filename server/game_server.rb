@@ -8,34 +8,76 @@ require_relative '../controller/new_controller' # TODO: Rename
 
 include Test::Unit::Assertions
 
+class PlayerMoveObserverFactory
+    def initialize(games_database_ip, games_database_port, game_server_ip, game_server_port)
+        @games_database_ip = games_database_ip
+        @games_database_port = games_database_port
+        @game_server_ip = game_server_ip
+        @game_server_port = game_server_port
+    end
+
+    def create_player_move_observer(game_uuid)
+        PlayerMoveObserver.new(
+            @games_database_ip, @games_database_port, @game_server_ip, @game_server_port, game_uuid)
+    end
+end
+
 # TODO: Remove? - Try first
 class PlayerMoveObserver
+    def initialize(games_database_ip, games_database_port, game_server_ip, game_server_port, game_uuid)
+        @games_database_ip = games_database_ip
+        @games_database_port = games_database_port
+        @game_server_ip = game_server_ip
+        @game_server_port = game_server_port
+        @game_uuid = game_uuid
+    end
+
+    def update(game)
+        # TODO: Don't do
+        # proxy = GameClient.new(
+        #     {:game_server_ip => @game_server_ip, :game_server_port => @game_server_port})
+        #         .proxy("gameServerHandler")
+
+        # proxy.process_move(@game_uuid, column_id)
+        #*
+
+        # TODO: Don't interact with DB directly *****
+        games_database_client = XMLRPC::Client.new3(
+            {:host => @games_database_ip, :port => @games_database_port})
+
+        serialized_game = YAML::dump(game)
+
+        games_database_client.call("gamesDatabaseServerHandler.set_game", @game_uuid, serialized_game)
+    end
+end
+
+class RefreshClientFactory
+    def initialize(game_server_ip, game_server_port)
+        @game_server_ip = game_server_ip
+        @game_server_port = game_server_port
+    end
+
+    def create_refresh_client(game_uuid)
+        RefreshClient.new(@game_server_ip, @game_server_port, game_uuid)
+    end
+end
+
+class RefreshClient
     def initialize(game_server_ip, game_server_port, game_uuid)
         @game_server_ip = game_server_ip
         @game_server_port = game_server_port
         @game_uuid = game_uuid
     end
 
-    def update(column_id)
-        proxy = GameClient.new(
-            {:game_server_ip => @game_server_ip, :game_server_port => @game_server_port})
-                .proxy("gameServerHandler")
-
-        proxy.process_move(@game_uuid, column_id)
-    end
-end
-
-class RefreshClient
     def get_game
         proxy = GameClient.new(
             {:game_server_ip => @game_server_ip, :game_server_port => @game_server_port})
                 .proxy("gameServerHandler")
 
-        proxy.process_move(@game_uuid, column_id)
+        serialized_game = proxy.get_game(@game_uuid)
+        return YAML::load(serialized_game)
     end
 end
-
-class RefreshObserver
 
 # TODO: Remove?
 class MockView
@@ -48,8 +90,12 @@ end
 class GameServerHandler
     # *****
     # Local functions:
-    def initialize(games_database_client, screen_name)
+    def initialize(
+        games_database_client, player_move_observer_factory, refresh_client_factory, screen_name)
         _verify_initialize_pre_conditions(screen_name)
+        
+        @player_move_observer_factory = player_move_observer_factory
+        @refresh_client_factory = refresh_client_factory
 
         @games_database_server_handler_proxy = games_database_client.proxy("gamesDatabaseServerHandler")
         @screen_name = screen_name
@@ -61,6 +107,80 @@ class GameServerHandler
         @make_move_callback_map = {}
 
         _verify_initialize_post_conditions
+    end
+
+    # Returns a controller if challenge was successfully accepted, false otherwise
+    def accept_challenge(views, game_type, other_screen_name)
+        _verify_accept_challenge_preconditions(other_screen_name)
+
+        game_uuid = nil
+        controller = nil
+
+        puts 'Here 1'
+
+        available_game_server_ips = _get_available_game_server_ips
+        available_game_server_ips.each { |game_server_ip|
+            ip, port = game_server_ip["address"].split(':')
+            port = port.to_i
+
+            puts 'Here 2'
+
+            # TODO: Catch timeout exception
+            proxy = GameClient.new({:game_server_ip => ip, :game_server_port => port})
+                .proxy("gameServerHandler")
+            
+            remote_screen_name = proxy.get_screen_name
+
+            puts 'Here 3'
+
+            if remote_screen_name == @screen_name
+                next
+            end
+
+            puts 'Here 4'
+
+            if remote_screen_name == other_screen_name
+                puts 'Here 5'
+
+                if proxy.process_accepted_challenge(@screen_name)
+                    puts 'Here 6'
+
+                    game_uuid = @incoming_challenges[other_screen_name]
+                    @incoming_challenges.delete(other_screen_name)
+
+                    puts 'Here 7'
+
+                    mv = MockView.new
+                    controller = Controller.new([mv], game_type, 1)
+
+                    # controller.set_player_move_observer(PlayerMoveObserver.new(ip, port, game_uuid))
+
+                    player_move_observer = @player_move_observer_factory
+                        .create_player_move_observer(game_uuid)
+                    controller.set_player_move_observer(player_move_observer)
+
+                    refresh_client = @refresh_client_factory.create_refresh_client(game_uuid)
+                    controller.set_refresh_client(refresh_client)
+
+                    puts 'Here 8'
+
+                    @make_move_callback_map[game_uuid] = lambda { |column_id|
+                        controller.other_player_update_model(column_id)
+                    }
+                end
+            end
+        }
+
+        puts 'Here 9'
+
+        unless game_uuid.nil?
+            @game_controller_map[game_uuid] = controller
+        end
+
+        _verify_accept_challenge_postconditions
+
+        # return controller
+        return controller.nil? ? false : YAML::dump(controller) # controller # TODO: Change?
     end
 
     # Returns a controller if challenge was successfully delivered, false otherwise
@@ -112,8 +232,14 @@ class GameServerHandler
 
                     # controller.set_move_proxy(proxy, game_uuid)
 
-                    controller.set_player_move_observer(PlayerMoveObserver.new(ip, port, game_uuid))
+                    player_move_observer = @player_move_observer_factory
+                        .create_player_move_observer(game_uuid)
+                    controller.set_player_move_observer(player_move_observer)
 
+                    refresh_client = @refresh_client_factory.create_refresh_client(game_uuid)
+                    controller.set_refresh_client(refresh_client)
+
+                    # TODO: Remove; can't use...
                     @make_move_callback_map[game_uuid] = lambda { |column_id|
                         puts 'In callback'
 
@@ -141,6 +267,10 @@ class GameServerHandler
         return return_val # TODO: Change?
     end
 
+    def get_game(game_uuid)
+        @games_database_server_handler_proxy.get_game(game_uuid)
+    end
+
     def get_incoming_challenges
         @incoming_challenges
     end
@@ -160,103 +290,6 @@ class GameServerHandler
         }
 
         return players
-    end
-
-    # Returns a controller if challenge was successfully accepted, false otherwise
-    def accept_challenge(views, game_type, other_screen_name)
-        _verify_accept_challenge_preconditions(other_screen_name)
-
-        game_uuid = nil
-        controller = nil
-
-        puts 'Here 1'
-
-        available_game_server_ips = _get_available_game_server_ips
-        available_game_server_ips.each { |game_server_ip|
-            ip, port = game_server_ip["address"].split(':')
-            port = port.to_i
-
-            puts 'Here 2'
-
-            # TODO: Catch timeout exception
-            proxy = GameClient.new({:game_server_ip => ip, :game_server_port => port})
-                .proxy("gameServerHandler")
-            
-            remote_screen_name = proxy.get_screen_name
-
-            puts 'Here 3'
-
-            if remote_screen_name == @screen_name
-                next
-            end
-
-            puts 'Here 4'
-
-            if remote_screen_name == other_screen_name
-                puts 'Here 5'
-
-                if proxy.process_accepted_challenge(@screen_name)
-                    puts 'Here 6'
-
-                    game_uuid = @incoming_challenges[other_screen_name]
-                    @incoming_challenges.delete(other_screen_name)
-
-                    puts 'Here 7'
-
-                    mv = MockView.new
-                    controller = Controller.new([mv], game_type, 1)
-
-                    # class MoveObserver
-                    #     def update(column_id)
-                    #         available_game_server_ips = _get_available_game_server_ips
-                    #         available_game_server_ips.each { |game_server_ip|
-                    #             ip, port = game_server_ip["address"].split(':')
-                    #             port = port.to_i
-
-                    #             proxy = GameClient.new({:game_server_ip => ip, :game_server_port => port})
-                    #                 .proxy("gameServerHandler")
-                
-                    #             remote_screen_name = proxy.get_screen_name
-
-                    #             if remote_screen_name == @screen_name
-                    #                 next
-                    #             end
-
-                    #             if remote_screen_name == other_screen_name
-                    #                 proxy.process_move(game_uuid, column_id)
-                    #             end
-                    #         }
-                    #     end
-                    # end
-
-
-                    # controller.set_move_observer(MoveObserver.new)
-
-
-                    # controller.set_move_proxy(proxy, game_uuid)
-
-
-                    controller.set_player_move_observer(PlayerMoveObserver.new(ip, port, game_uuid))
-
-                    puts 'Here 8'
-
-                    @make_move_callback_map[game_uuid] = lambda { |column_id|
-                        controller.other_player_update_model(column_id)
-                    }
-                end
-            end
-        }
-
-        puts 'Here 9'
-
-        unless game_uuid.nil?
-            @game_controller_map[game_uuid] = controller
-        end
-
-        _verify_accept_challenge_postconditions
-
-        # return controller
-        return controller.nil? ? false : YAML::dump(controller) # controller # TODO: Change?
     end
     # *****
 
@@ -294,6 +327,8 @@ class GameServerHandler
         unless @make_move_callback_map.include? game_uuid
             return false
         end
+
+        @games_database_server_handler_proxy.get_game(game_uuid)
 
         @make_move_callback_map[game_uuid].call(column_id)
 
@@ -346,9 +381,16 @@ class GameServer
         @games_database_client = XMLRPC::Client.new3(
             {:host => games_database_ip, :port => games_database_port})
 
+        player_move_observer_factory = PlayerMoveObserverFactory.new(
+            games_database_ip, games_database_port, '127.0.0.1', @game_server_port)
+        refresh_client_factory = RefreshClientFactory.new('127.0.0.1', @game_server_port)
+
+        server_handler = GameServerHandler.new(
+            @games_database_client, player_move_observer_factory, refresh_client_factory, screen_name)
+
         @server = XMLRPC::Server.new(@game_server_port)
         @server.add_handler(
-            "gameServerHandler", GameServerHandler.new(@games_database_client, screen_name))
+            "gameServerHandler", server_handler)
 
         _verify_initialize_post_conditions
     end

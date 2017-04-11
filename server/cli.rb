@@ -126,6 +126,12 @@ class CLI
             end
 
             puts @tmp_controller.get_game.get_board.to_s
+        when 'refresh-board'
+            unless !@tmp_controller.nil?
+                raise "ERROR: Controller not initialized"
+            end
+
+            puts @tmp_controller.refresh
         else
             puts "ERROR: Unrecognized command"
         end

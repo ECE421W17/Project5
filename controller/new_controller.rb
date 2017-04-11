@@ -60,7 +60,7 @@ class Controller
         # end
 
         unless @player_move_observer.nil?
-            @player_move_observer.update(column_number)
+            @player_move_observer.update(@game)
         end
 
         _verify_player_update_model_postconditions
@@ -84,7 +84,7 @@ class Controller
     def refresh
         _verify_refresh_preconditions
         
-        @game = @refresh_client.get_game
+        updated_game = @refresh_client.get_game
 
         _verify_refresh_postconditions
     end

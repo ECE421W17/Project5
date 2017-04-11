@@ -7,6 +7,10 @@ class GamesDatabaseServerHandler
         @games_database = GamesDatabase.new
     end
 
+    def get_game(game_uuid, serialized_game)
+        @games_database.query(:RESULT, {:uuid => game_uuid})
+    end
+
     def get_game_server_ips
         @games_database.available_servers
     end
@@ -15,6 +19,18 @@ class GamesDatabaseServerHandler
         @games_database.register_game_server(game_server_address)
 
         # TODO: Come up with more appropriate value?
+        return true
+    end
+
+    def set_game(game_uuid, serialized_game)
+        puts 'In set game...'
+
+        unless get_game.nil?
+            @games_database.update(:PROGRESS, {:uuid => game_uuid, :serialized_game => serialized_game})
+        else
+            @games_database.create(:PROGRESS, {:uuid => game_uuid, :serialized_game => serialized_game})
+        end
+
         return true
     end
 
