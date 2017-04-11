@@ -86,6 +86,10 @@ class Controller
         
         updated_game = @refresh_client.get_game
 
+        puts updated_game.get_board.to_s
+
+        @game = updated_game
+
         _verify_refresh_postconditions
     end
 

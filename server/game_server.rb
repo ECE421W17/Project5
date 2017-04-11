@@ -70,6 +70,9 @@ class RefreshClient
     end
 
     def get_game
+        puts 'Getting game in refresh client'
+        puts @game_uuid
+
         proxy = GameClient.new(
             {:game_server_ip => @game_server_ip, :game_server_port => @game_server_port})
                 .proxy("gameServerHandler")

@@ -103,12 +103,16 @@ class GamesDatabase
     def create(table, new_object)
         create_pre_cond(table, new_object)
 
+        puts 'In create'
+
         id = generate_new_id(table)
         @cache[table].push(new_object.merge({:id => id}))
         @dirty = true
 
         create_post_cond(table, new_object, id)
         check_class_invariants
+
+        puts 'Exiting create'
     end
 
     def update(table, id, object_content)
