@@ -1,21 +1,19 @@
-require 'pp' # TODO: Remove?
+require 'pp'
 require 'xmlrpc/client'
 require 'yaml' # TODO: Remove?
 
 require_relative 'game_client'
 require_relative 'game_server'
 
+# TODO: Use
 # Just a stub object to get things to work
-# TODO: Remove? Remove comment? :S
-# class MockView
-#     def update(positions, victory)
-#     end
-# end
+class MockView
+    def update(positions, victory)
+    end
+end
 
 class CLI
     def initialize(screen_name, port_number)
-        puts 'In initialize'
-
         launch_local_game_server(screen_name, port_number)
 
         # TODO: Extract address to global scope
@@ -25,8 +23,6 @@ class CLI
 
     def launch_local_game_server(screen_name, port_number)
         pid = Process.fork do
-            puts 'In new process...'
-
             # TODO: Extract address to global scope
             gs = GameServer.new({:games_database_ip => '127.0.0.1', :games_database_port => 9000,
                 :game_server_port => port_number, :screen_name => screen_name})
@@ -39,8 +35,6 @@ class CLI
     end
 
     def process_command_command_string(command_string)
-        puts "Processing command: #{command_string}"
-
         server_proxy = @client.proxy("gameServerHandler") 
 
         command_regex = /\S+/
@@ -48,8 +42,6 @@ class CLI
 
         command = command_regex.match(command_string).to_s
         arguments = arguments_regex.match(command_string).to_s.strip
-
-        # split_integer_args = arguments.split(" ").map { |val| val.to_i }
 
         case command
         when "accept-challenge"
@@ -59,23 +51,8 @@ class CLI
                 return
             end
 
-            res = server_proxy.accept_challenge(
-                [], :Connect4, split_arguments[0])
-
-            res = YAML::load(res)
-
-            puts "Res: #{res}"
-
-            mv = MockView.new
-            res.add_view(mv)
-
-            @tmp_controller = res
-
-            if res.nil?
-                puts "nil"
-            else
-                puts "non-nil"
-            end
+            @tmp_controller = YAML::load(
+                server_proxy.accept_challenge([], :Connect4, split_arguments[0]))
         when 'challenge-connect4'
             split_arguments = arguments.split(" ")
             if split_arguments.length != 1
@@ -83,24 +60,9 @@ class CLI
                 return
             end
 
-            res = server_proxy.challenge_player_with_screen_name(
-                [], :Connect4, split_arguments[0])
-            
-            res = YAML::load(res)
-
-            puts "Res: #{res}"
-
-            mv = MockView.new
-            res.add_view(mv)
-
-            @tmp_controller = res
-
-            if res.nil?
-                puts "nil"
-            else
-                puts "non-nil"
-            end
-        when "get-challenges"
+            @tmp_controller = YAML::load(
+                server_proxy.challenge_player_with_screen_name([], :Connect4, split_arguments[0]))
+        when "list-challenges"
             res = server_proxy.get_incoming_challenges
             pp res
         when 'list-players'
@@ -144,7 +106,7 @@ class CLI
                 process_command_command_string command_string
             end
         rescue Interrupt
-            puts 'Rescued'
+            puts 'Exiting'
         end
     end
 end

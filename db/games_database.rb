@@ -103,36 +103,24 @@ class GamesDatabase
     def create(table, new_object)
         create_pre_cond(table, new_object)
 
-        puts 'In create'
-
         id = generate_new_id(table)
         @cache[table].push(new_object.merge({:id => id}))
         @dirty = true
 
         create_post_cond(table, new_object, id)
         check_class_invariants
-
-        puts 'Exiting create'
     end
 
     def update(table, id, object_content)
-        puts 'In update'
-
         update_pre_cond(id, table, object_content)
-
-        puts 'Past pre cond'
 
         @cache[table] = @cache[table].map do |obj|
             obj[:id] == id ? obj.merge({:id => id}).merge(object_content) : obj
         end
         @dirty = true
 
-        puts 'Updated'
-
         update_post_cond(id, table, object_content)
         check_class_invariants
-
-        puts 'Exiting'
     end
 
     def delete(table, id)

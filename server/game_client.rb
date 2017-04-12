@@ -4,8 +4,6 @@ class GameClient
     def initialize(game_client_argument_hash)
         _verify_initialize_pre_conditions(game_client_argument_hash)
         
-        puts 'Initializing game client...'
-
         game_server_ip = game_client_argument_hash[:game_server_ip].to_s
         game_server_port = game_client_argument_hash[:game_server_port].to_i
 
@@ -15,8 +13,6 @@ class GameClient
     end
 
     def call(path, *args)
-        puts "Calling... path: #{path}, args: #{args}"
-        
         @client.call(path, *args)
     end
 

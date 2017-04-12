@@ -24,32 +24,21 @@ class GamesDatabaseServerHandler
     def register_game_server(game_server_address)
         @games_database.register_game_server(game_server_address)
 
-        # TODO: Come up with more appropriate value?
+        # TODO: Add verification?
         return true
     end
 
     def set_game(game_uuid, serialized_game)
-        puts 'In set game...'
-
         if get_game(game_uuid) != false
-            puts 'Updating...' # Made it here...
-
             res = @games_database.query(:PROGRESS, {:uuid => game_uuid})
 
-            puts 'Here'
-
             unless res.empty?
-                puts 'Now here'
-
                 @games_database.update(
                     :PROGRESS, res[0][:id], {:uuid => game_uuid, :serialized_game => serialized_game})
             else
-                puts 'Record not found'
                 return false
             end
         else
-            puts 'Creating...'
-
             @games_database.create(:PROGRESS, {:uuid => game_uuid, :serialized_game => serialized_game})
         end
 
@@ -59,7 +48,7 @@ class GamesDatabaseServerHandler
     def unregister_game_server(game_server_address)
         @games_database.remove_game_server(game_server_address)
 
-        # TODO: Come up with more appropriate value?
+        # TODO: Add verification?
         return true
     end
 end
