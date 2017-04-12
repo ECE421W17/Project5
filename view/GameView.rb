@@ -70,7 +70,6 @@ class GameView
       menu = @builder.get_object("menuitem6")
       menu.signal_connect( "activate" ) { setUpTheBoard(:OttoNToot, false) }
 
-
 #
 # Step 3: set all the tiles on the TTT board to a "blank" value.
 #   Oh, and connect a signal to each button while we are at it

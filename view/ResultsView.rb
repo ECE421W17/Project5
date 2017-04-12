@@ -27,8 +27,11 @@ class ResultsView
     check_class_invariants
   end
 
-  def setUpLeaderBoard(data)
+  def setUpLeaderBoard(data=10)
     check_class_invariants
+
+    #res = top_players(data);
+    #popup(res);
   end
 
   def setUpGameHistory( data )
@@ -39,7 +42,7 @@ class ResultsView
     check_class_invariants
   end
 
-  def update( data )
+  def update(data)
     check_class_invariants
   end
 
