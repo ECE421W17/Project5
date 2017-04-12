@@ -1,4 +1,5 @@
 require 'pp'
+require 'socket'
 require 'xmlrpc/client'
 require 'yaml' # TODO: Remove?
 
@@ -11,13 +12,18 @@ class CLI
 
         # TODO: Extract address to global scope
         # TODO: Wait for server to come up?...
-        @client = GameClient.new({:game_server_ip => '127.0.0.1', :game_server_port => port_number})
+
+        @local_ip_address =
+            Socket.ip_address_list.find { |ai| ai.ipv4? && !ai.ipv4_loopback? }.ip_address
+
+        @client = GameClient.new(
+            {:game_server_ip => @local_ip_address, :game_server_port => port_number})
     end
 
     def launch_local_game_server(screen_name, port_number)
         pid = Process.fork do
             # TODO: Extract address to global scope
-            gs = GameServer.new({:games_database_ip => '127.0.0.1', :games_database_port => 9000,
+            gs = GameServer.new({:games_database_ip => @local_ip_address, :games_database_port => 9000,
                 :game_server_port => port_number, :screen_name => screen_name})
             gs.serve
         end

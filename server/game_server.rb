@@ -1,4 +1,5 @@
 require 'securerandom'
+require 'socket'
 require 'test/unit/assertions'
 require 'xmlrpc/server'
 require 'yaml'
@@ -285,6 +286,7 @@ class GameServer
 
         games_database_ip = game_server_argument_hash[:games_database_ip].to_s
         games_database_port = game_server_argument_hash[:games_database_port].to_i
+        @game_server_ip = Socket.ip_address_list.find { |ai| ai.ipv4? && !ai.ipv4_loopback? }.ip_address
         @game_server_port = game_server_argument_hash[:game_server_port].to_i
         screen_name = game_server_argument_hash[:screen_name].to_s
 
@@ -292,13 +294,13 @@ class GameServer
             {:host => games_database_ip, :port => games_database_port})
 
         player_move_observer_factory = PlayerMoveObserverFactory.new(
-            games_database_ip, games_database_port, '127.0.0.1', @game_server_port)
-        refresh_client_factory = RefreshClientFactory.new('127.0.0.1', @game_server_port)
+            games_database_ip, games_database_port, @game_server_ip, @game_server_port)
+        refresh_client_factory = RefreshClientFactory.new(@game_server_ip, @game_server_port)
 
         server_handler = GameServerHandler.new(
             @games_database_client, player_move_observer_factory, refresh_client_factory, screen_name)
 
-        @server = XMLRPC::Server.new(@game_server_port)
+        @server = XMLRPC::Server.new(@game_server_port, @game_server_ip)
         @server.add_handler(
             "gameServerHandler", server_handler)
 
@@ -312,13 +314,13 @@ class GameServer
         # -> If the screen name is not unique, you could just kill the server...
 
         @games_database_client.call("gamesDatabaseServerHandler.register_game_server",
-            "127.0.0.1:#{@game_server_port}")
+            "#{@game_server_ip}:#{@game_server_port}")
 
         begin
             @server.serve
         ensure
             @games_database_client.call("gamesDatabaseServerHandler.unregister_game_server",
-                "127.0.0.1:#{@game_server_port}")
+                "#{@game_server_ip}:#{@game_server_port}")
         end
     end
 
