@@ -1,3 +1,4 @@
+require 'socket'
 require 'xmlrpc/server'
 
 require_relative 'games_database'
@@ -55,7 +56,10 @@ end
 
 class GamesDatabaseServer
     def initialize
-        @server = XMLRPC::Server.new(9000)
+        local_ip_address = Socket.ip_address_list.find { |ai|
+            ai.ipv4? && !ai.ipv4_loopback? }.ip_address
+
+        @server = XMLRPC::Server.new(9000, local_ip_address)
         @server.add_handler("gamesDatabaseServerHandler", GamesDatabaseServerHandler.new)
     end
 

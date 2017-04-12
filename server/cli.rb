@@ -7,8 +7,9 @@ require_relative 'game_client'
 require_relative 'game_server'
 
 class CLI
-    def initialize(screen_name, port_number)
-        launch_local_game_server(screen_name, port_number)
+    def initialize(screen_name, games_database_server_ip, games_database_server_port, game_server_port)
+        launch_local_game_server(
+            screen_name, games_database_server_ip, games_database_server_port, game_server_port)
 
         # TODO: Extract address to global scope
         # TODO: Wait for server to come up?...
@@ -17,14 +18,16 @@ class CLI
             Socket.ip_address_list.find { |ai| ai.ipv4? && !ai.ipv4_loopback? }.ip_address
 
         @client = GameClient.new(
-            {:game_server_ip => @local_ip_address, :game_server_port => port_number})
+            {:game_server_ip => @local_ip_address, :game_server_port => game_server_port})
     end
 
-    def launch_local_game_server(screen_name, port_number)
+    def launch_local_game_server(screen_name, games_database_server_ip, games_database_server_port, game_server_port)
         pid = Process.fork do
             # TODO: Extract address to global scope
-            gs = GameServer.new({:games_database_ip => @local_ip_address, :games_database_port => 9000,
-                :game_server_port => port_number, :screen_name => screen_name})
+            gs = GameServer.new(
+                {:games_database_ip => games_database_server_ip,
+                    :games_database_port => games_database_server_port,
+                        :game_server_port => game_server_port, :screen_name => screen_name})
             gs.serve
         end
 
@@ -56,7 +59,7 @@ class CLI
                 return
             end
 
-            @tmp_controller = @client.issue_challenge(split_arguments[0], :Connect4) 
+            @tmp_controller = @client.issue_challenge(split_arguments[0], :Connect4)
         when "list-challenges"
             res = @client.get_challenges
             pp res
