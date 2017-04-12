@@ -9,7 +9,7 @@ end
 
 ip_address = Socket.ip_address_list.find { |ai| ai.ipv4? && !ai.ipv4_loopback? }.ip_address
 
-s = XMLRPC::Server.new(8080, ip_address)
+s = XMLRPC::Server.new(50080, ip_address)
 s.add_handler("customHandler", CustomHandler.new)
 
 s.serve
