@@ -1,5 +1,4 @@
 
-
 require 'gtk2'
 
 require_relative '../model/otto_n_toot.rb'
@@ -7,7 +6,6 @@ require_relative '../model/victory'
 require_relative '../controller/controller'
 
 class GameView
-
 
   T = "T"
   O = "O"
@@ -29,7 +27,7 @@ class GameView
 
       @builder = Gtk::Builder::new
 #http://ruby-gnome2.sourceforge.jp/hiki.cgi?Gtk%3A%3ABuilder
-      @builder.add_from_file("game.glade")
+      @builder.add_from_file("GameView.glade")
      # @builder.connect_signals{ |handler| method(handler) }  # (No handlers yet, but I will have eventually)
 
 
@@ -70,6 +68,12 @@ class GameView
       menu = @builder.get_object("menuitem6")
       menu.signal_connect( "activate" ) { setUpTheBoard(:OttoNToot, false) }
 
+      menu = @builder.get_object("LeaderBoardMenuItem")
+      menu.signal_connect("activate"){ openLeaderBoard}
+
+      menu = @builder.get_object("HistoryMenuItem")
+      menu.signal_connect("activate"){ openHistory}
+
 #
 # Step 3: set all the tiles on the TTT board to a "blank" value.
 #   Oh, and connect a signal to each button while we are at it
@@ -90,6 +94,13 @@ class GameView
     check_class_invariants
   end
 
+  def openLeaderBoard()
+    popup("Open board")
+  end
+
+  def openHistory()
+    popup("Open history")
+  end
 
   def setUpTheBoard (gameType = :OttoNToot, virtual_player = false)
       @gameType = gameType
