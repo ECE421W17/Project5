@@ -79,6 +79,4 @@ class LeaderBoardView < VR::ListView
     rows << ["F", "0","0","0","0","1","1","1","1","2","2","2","1"]
     rows << ["G", "0","0","0","0","1","1","1","1","2","2","2","1"]
   end
-
-  LeaderBoardView.new.show_glade()
 end

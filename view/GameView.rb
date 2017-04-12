@@ -4,6 +4,8 @@ require 'gtk2'
 require_relative '../model/otto_n_toot.rb'
 require_relative '../model/victory'
 require_relative '../controller/controller'
+#require_relative 'LeaderBoard'
+#require_relative 'History'
 
 class GameView
 
@@ -69,7 +71,10 @@ class GameView
       menu.signal_connect( "activate" ) { setUpTheBoard(:OttoNToot, false) }
 
       menu = @builder.get_object("LeaderBoardMenuItem")
-      menu.signal_connect("activate"){ openLeaderBoard}
+      menu.signal_connect("activate"){
+        #lb = LeaderBoard.new
+        #lb.show
+      }
 
       menu = @builder.get_object("HistoryMenuItem")
       menu.signal_connect("activate"){ openHistory}

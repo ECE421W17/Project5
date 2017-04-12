@@ -63,7 +63,5 @@ class History < VR::ListView
     rows << ["F", "0","3","Connect4","3","Unfinished"]
     rows << ["G", "1","3","OttoNToot","3","Finished"]
   end
-
-  History.new.show_glade()
 end
 
