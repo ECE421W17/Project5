@@ -86,9 +86,27 @@ class Controller
         
         updated_game = @refresh_client.get_game
 
+        if updated_game.nil?
+            puts 'Updated game is nil'
+
+            return
+        end
+
         puts updated_game.get_board.to_s
 
-        @game = updated_game
+        unless @game.get_board == updated_game.get_board
+            puts 'Boards not equal'
+
+            @game = updated_game
+
+            puts "Next player: #{@next_player}"
+
+            @next_player = @next_player == 1 ? 2 : 1
+
+            puts "Next player is now: #{@next_player}"
+        end
+
+        puts 'Boards not equal'
 
         _verify_refresh_postconditions
     end

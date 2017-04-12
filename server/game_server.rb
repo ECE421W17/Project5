@@ -78,7 +78,15 @@ class RefreshClient
                 .proxy("gameServerHandler")
 
         serialized_game = proxy.get_game(@game_uuid)
-        return YAML::load(serialized_game)
+        unless serialized_game == false
+            puts 'Serialized game not false'
+
+            return YAML::load(serialized_game)
+        end
+
+        puts 'Serialized game is false'
+
+        return nil
     end
 end
 

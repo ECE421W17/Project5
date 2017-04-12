@@ -32,13 +32,17 @@ class GamesDatabaseServerHandler
         puts 'In set game...'
 
         if get_game(game_uuid) != false
-            puts 'Updating...'
+            puts 'Updating...' # Made it here...
 
             res = @games_database.query(:PROGRESS, {:uuid => game_uuid})
 
+            puts 'Here'
+
             unless res.empty?
+                puts 'Now here'
+
                 @games_database.update(
-                    :PROGRESS, res[:id], {:uuid => game_uuid, :serialized_game => serialized_game})
+                    :PROGRESS, res[0][:id], {:uuid => game_uuid, :serialized_game => serialized_game})
             else
                 puts 'Record not found'
                 return false
