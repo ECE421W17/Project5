@@ -75,7 +75,7 @@ class RefreshClient
     end
 end
 
-# TODO: Remove?
+# Just a stub object to get things to work
 class MockView
     def update(positions, victory)
         # ...
@@ -102,8 +102,7 @@ class GameServerHandler
     end
 
     # Returns a controller if challenge was successfully accepted, false otherwise
-    # TODO: Refactor; views parameter not used...
-    def accept_challenge(views, game_type, other_screen_name)
+    def accept_challenge(game_type, other_screen_name)
         _verify_accept_challenge_preconditions(other_screen_name)
 
         game_uuid = nil
@@ -149,7 +148,7 @@ class GameServerHandler
     end
 
     # Returns a controller if challenge was successfully delivered, false otherwise
-    def challenge_player_with_screen_name(views, game_type, screen_name)
+    def challenge_player_with_screen_name(game_type, screen_name)
         _verify_challenge_player_with_screen_name_preconditions(screen_name)
 
         controller = nil

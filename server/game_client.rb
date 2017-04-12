@@ -8,12 +8,31 @@ class GameClient
         game_server_port = game_client_argument_hash[:game_server_port].to_i
 
         @client = XMLRPC::Client.new3({:host => game_server_ip, :port => game_server_port})
+        @client_proxy = @client.proxy("gameServerHandler")
 
         _verify_initialize_post_conditions
     end
 
-    def call(path, *args)
-        @client.call(path, *args)
+    # TODO: Don't use hard-coded game type...
+    def accept_challenge(screen_name, game_type)
+        controller = YAML::load(@client_proxy.accept_challenge(game_type, screen_name))
+
+        return controller == false ? nil : controller
+    end
+
+    def get_challenges
+        @client_proxy.get_incoming_challenges
+    end
+
+    def get_online_players
+        @client_proxy.get_online_players
+    end
+
+    def issue_challenge(screen_name, game_type)
+        controller = YAML::load(
+            @client_proxy.challenge_player_with_screen_name(game_type, screen_name))
+        
+        return controller == false ? nil : controller
     end
 
     def proxy(path)

@@ -5,13 +5,6 @@ require 'yaml' # TODO: Remove?
 require_relative 'game_client'
 require_relative 'game_server'
 
-# TODO: Use
-# Just a stub object to get things to work
-class MockView
-    def update(positions, victory)
-    end
-end
-
 class CLI
     def initialize(screen_name, port_number)
         launch_local_game_server(screen_name, port_number)
@@ -35,8 +28,6 @@ class CLI
     end
 
     def process_command_command_string(command_string)
-        server_proxy = @client.proxy("gameServerHandler") 
-
         command_regex = /\S+/
         arguments_regex = /(\s+\S+)+/
 
@@ -51,8 +42,7 @@ class CLI
                 return
             end
 
-            @tmp_controller = YAML::load(
-                server_proxy.accept_challenge([], :Connect4, split_arguments[0]))
+            @tmp_controller = @client.accept_challenge(split_arguments[0], :Connect4)
         when 'challenge-connect4'
             split_arguments = arguments.split(" ")
             if split_arguments.length != 1
@@ -60,13 +50,12 @@ class CLI
                 return
             end
 
-            @tmp_controller = YAML::load(
-                server_proxy.challenge_player_with_screen_name([], :Connect4, split_arguments[0]))
+            @tmp_controller = @client.issue_challenge(split_arguments[0], :Connect4) 
         when "list-challenges"
-            res = server_proxy.get_incoming_challenges
+            res = @client.get_challenges
             pp res
         when 'list-players'
-            res = server_proxy.get_online_players
+            res = @client.get_online_players
             pp res
         when 'make-move'
             unless !@tmp_controller.nil?
