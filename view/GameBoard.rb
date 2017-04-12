@@ -1,6 +1,7 @@
 require "vrlib"
 require_relative "LeaderBoardView"
 require_relative "History"
+require_relative "ActiveUser"
 
 class GameBoard 
  
@@ -22,10 +23,14 @@ class GameBoard
 
   def menuitem3__activate(*args)
     alert "New Challenge Connect4"
+    ActiveUser.new.show_glade()
+    
   end
 
   def menuitem6__activate(*args)
     alert "New Challenge OttoNToot"
+    ActiveUser.new.show_glade()
+
   end
 
   def leaderboardmenuitem__activate(*args)
