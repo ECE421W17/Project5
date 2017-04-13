@@ -2,6 +2,7 @@ require "vrlib"
 require_relative "LeaderBoardView"
 require_relative "History"
 require_relative "ActiveUser"
+require_relative "ResumeGameList"
 require_relative '../controller/controller'
 
 class GameBoard
@@ -83,7 +84,7 @@ class GameBoard
   end
 
   def resumeMenuItem__activate(*args)
-    alert 'Resume Game'
+    ResumeGameList.new.show_glade()
   end
 
   def refreshbutton__clicked(*args)
