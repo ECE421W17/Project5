@@ -103,7 +103,7 @@ class GameServerHandler
     end
 
     # Returns a controller if challenge was successfully accepted, false otherwise
-    def accept_challenge(game_type, other_screen_name)
+    def accept_challenge(other_screen_name)
         _verify_accept_challenge_preconditions(other_screen_name)
 
         game_uuid = nil
@@ -126,7 +126,8 @@ class GameServerHandler
 
             if remote_screen_name == other_screen_name
                 if proxy.process_accepted_challenge(@screen_name)
-                    game_uuid = @incoming_challenges[other_screen_name]
+                    game_uuid = @incoming_challenges[other_screen_name][:game_uuid]
+                    game_type = @incoming_challenges[other_screen_name][:game_type]
                     @incoming_challenges.delete(other_screen_name)
 
                     mv = MockView.new
@@ -172,7 +173,7 @@ class GameServerHandler
             end
 
             if remote_screen_name == screen_name
-                if proxy.process_challenge(@screen_name, game_uuid)
+                if proxy.process_challenge(@screen_name, game_uuid, game_type)
                     @outgoing_challenges.push(screen_name)
 
                     mv = MockView.new
@@ -228,12 +229,12 @@ class GameServerHandler
         return @screen_name.nil? ? false : @screen_name
     end
 
-    def process_challenge(other_screen_name, game_uuid)
+    def process_challenge(other_screen_name, game_uuid, game_type)
         unless !@incoming_challenges.has_key?(other_screen_name)
             return false
         end
 
-        @incoming_challenges[other_screen_name] = game_uuid
+        @incoming_challenges[other_screen_name] = {:game_uuid => game_uuid, :game_type => game_type}
 
         return true
     end

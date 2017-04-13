@@ -67,9 +67,11 @@ class Controller
         end
 
         unless @game.get_board == updated_game.get_board
-            @game = updated_game
+            @game.set_board(updated_game.get_board)
             @next_player = @next_player == 1 ? 2 : 1
         end
+
+        @game.notify_observers(@game.get_board.positions, @game.winner)
 
         _verify_refresh_postconditions
     end

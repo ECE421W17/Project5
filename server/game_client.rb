@@ -14,8 +14,8 @@ class GameClient
     end
 
     # TODO: Don't use hard-coded game type...
-    def accept_challenge(screen_name, game_type)
-        controller = YAML::load(@client_proxy.accept_challenge(game_type, screen_name))
+    def accept_challenge(screen_name)
+        controller = YAML::load(@client_proxy.accept_challenge(screen_name))
 
         return controller == false ? nil : controller
     end

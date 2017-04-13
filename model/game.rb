@@ -100,6 +100,10 @@ class Game
         make_move_post_cond
     end
 
+    def set_board(new_board)
+        @board = new_board
+    end
+
     def winner
         # Determine if any player has won (its winning condition is met)
         # and return the corresponding Victory object if yes, nil otherwise

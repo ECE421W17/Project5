@@ -59,6 +59,8 @@ class GamesDatabaseServer
         local_ip_address = Socket.ip_address_list.find { |ai|
             ai.ipv4? && !ai.ipv4_loopback? }.ip_address
 
+        puts "IP address: #{local_ip_address}"
+        
         @server = XMLRPC::Server.new(port, local_ip_address)
         @server.add_handler("gamesDatabaseServerHandler", GamesDatabaseServerHandler.new)
     end

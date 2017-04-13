@@ -51,7 +51,7 @@ class CLI
                 return
             end
 
-            @tmp_controller = @client.accept_challenge(split_arguments[0], :Connect4)
+            @tmp_controller = @client.accept_challenge(split_arguments[0])
         when 'challenge-connect4'
             split_arguments = arguments.split(" ")
             if split_arguments.length != 1
