@@ -47,8 +47,6 @@ class PlayerMoveObserver
         next_player_to_move = next_player_to_move_rank == 1 ?
             @player_1_screen_name : @player_2_screen_name
 
-        puts "Updating: player 1: #{@player_1_screen_name}, player 2: #{@player_2_screen_name}"
-
         games_database_client.call("gamesDatabaseServerHandler.set_game", @game_uuid, serialized_game,
             @player_1_screen_name, @player_2_screen_name, next_player_to_move, game_type)
     end
@@ -136,14 +134,10 @@ class GameServerHandler
 
             if remote_screen_name == other_screen_name
                 if proxy.process_accepted_challenge(@local_screen_name)
-                    puts 'Here'
-
                     game_uuid = @incoming_challenges[other_screen_name][:game_uuid]
                     is_new_game = @incoming_challenges[other_screen_name][:is_new_game]
 
                     if is_new_game
-                        puts 'New game'
-
                         game_type = @incoming_challenges[other_screen_name][:game_type]
 
                         mv = MockView.new
@@ -285,13 +279,7 @@ class GameServerHandler
         suspended_game = suspended_games[0]
 
         game = YAML::load(suspended_game['serialized_game'])
-
-        puts "B"
-
         game_type = suspended_game['game_type']
-        
-        puts "C"
-
         local_player_rank = @local_screen_name == suspended_game['p1'] ? 1 : 2 
 
         # TODO: Figure out why this is wrong? *****
@@ -299,14 +287,10 @@ class GameServerHandler
         other_screen_name = @local_screen_name == suspended_game['p1'] ?
             suspended_game['p2'] : suspended_game['p1']
 
-        puts "HERE"
-
         controller = nil
 
         available_game_server_ips = _get_available_game_server_ips
         available_game_server_ips.each { |game_server_ip|
-            puts "IN LOOP"
-            
             ip, port = game_server_ip["address"].split(':')
             port = port.to_i
 
@@ -315,31 +299,14 @@ class GameServerHandler
             proxy = GameClient.new({:game_server_ip => ip, :game_server_port => port})
                 .proxy("gameServerHandler")
 
-            puts "HERE AGAIN"
-
             remote_screen_name = proxy.get_screen_name
-
-            puts "*****"
-
-            puts "Remote screen name: #{remote_screen_name}"
-            puts "Local screen name: #{@local_screen_name}"
-
             if remote_screen_name == @local_screen_name
                 next
             end
 
-            puts "!!!!!"
-
             if remote_screen_name == other_screen_name
-                puts "ASDF"
-
-                # Add 'new game boolean' parameter
-                puts "#{@local_screen_name}, #{game_uuid}, #{game_type}"
-
                 if proxy.process_challenge(@local_screen_name, game_uuid, game_type, false)
                     @outgoing_challenges.push(other_screen_name)
-
-                    puts "HERE TWO"
 
                     mv = MockView.new
                     controller = Controller.new([mv], game_type, :TWO_PLAYER, local_player_rank)
@@ -357,12 +324,8 @@ class GameServerHandler
 
                     break
                 end
-
-                puts "Inner cond false"
             end
         }
-
-        puts "Out of loop"
 
         _verify_resume_suspended_game_postconditions
 
@@ -373,16 +336,10 @@ class GameServerHandler
     # *****
     # Remote functions:
     def get_screen_name
-        res = @local_screen_name.nil? ? false : @local_screen_name
-
-        puts "In get screen name, res: #{res}"
-
-        return res
+        return @local_screen_name.nil? ? false : @local_screen_name
     end
 
     def process_challenge(other_screen_name, game_uuid, game_type, is_new_game)
-        puts "In process challenge"
-
         unless !@incoming_challenges.has_key?(other_screen_name)
             return false
         end
@@ -435,8 +392,6 @@ class GameServerHandler
     end
 
     def _verify_resume_suspended_game_preconditions(game_uuid)
-        puts "UUID: #{game_uuid}"
-
         suspended_games = get_suspended_games
         assert(suspended_games.any? { |suspended_game| suspended_game['uuid'] == game_uuid },
             'There is no suspended game with the given uuid')
