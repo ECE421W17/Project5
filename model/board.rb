@@ -161,4 +161,8 @@ class Board
         right_left = all_index_pairs.group_by{|i,j| i + j}.values
         left_right + right_left
     end
+
+    def to_s
+        @columns.to_s
+    end
 end
