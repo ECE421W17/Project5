@@ -3,6 +3,7 @@ require_relative "LeaderBoardView"
 require_relative "History"
 require_relative "ActiveUser"
 require_relative "ResumeGameList"
+require_relative "Challenger"
 require_relative '../controller/controller'
 
 class GameBoard
@@ -89,6 +90,10 @@ class GameBoard
 
   def refreshbutton__clicked(*args)
     alert "Refresh game"
+  end
+
+  def challengeMenuItem__activate(*args)
+    Challenger.new.show_glade()
   end
 
   def setUpTheBoard (gameType = :OttoNToot, virtual_player = false)

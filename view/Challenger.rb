@@ -48,5 +48,5 @@ class Challenger < VR::ListView
     end
   end
 end
-Challenger.new.show_glade()
+#Challenger.new.show_glade()
 
