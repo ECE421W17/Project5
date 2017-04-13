@@ -40,18 +40,23 @@ class GamesDatabaseServerHandler
         return true
     end
 
-    def set_game(game_uuid, serialized_game)
+    def set_game(game_uuid, serialized_game, player_1_screen_name, player_2_screen_name,
+        next_player_to_move)
         if get_game(game_uuid) != false
             res = @games_database.query(:PROGRESS, {:uuid => game_uuid})
 
             unless res.empty?
                 @games_database.update(
-                    :PROGRESS, res[0][:id], {:uuid => game_uuid, :serialized_game => serialized_game})
+                    :PROGRESS, res[0][:id], {:uuid => game_uuid, :serialized_game => serialized_game,
+                        :p1 => player_1_screen_name, :p2 => player_2_screen_name,
+                            :next_player_to_move => next_player_to_move})
             else
                 return false
             end
         else
-            @games_database.create(:PROGRESS, {:uuid => game_uuid, :serialized_game => serialized_game})
+            @games_database.create(:PROGRESS, {:uuid => game_uuid, :serialized_game => serialized_game,
+                        :p1 => player_1_screen_name, :p2 => player_2_screen_name,
+                            :next_player_to_move => next_player_to_move})
         end
 
         return true

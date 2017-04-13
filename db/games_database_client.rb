@@ -16,7 +16,8 @@ class GamesDatabaseClient
     end
 
     def games_won_by(screen_name)
-        @client_proxy.games_won_by(screen_name)
+        res = @client_proxy.games_won_by(screen_name)
+        return res == false ? nil : res
     end
 
     def proxy(path)
@@ -24,11 +25,13 @@ class GamesDatabaseClient
     end
 
     def query(table, query_hash)
-        @client_proxy.query(table, query_hash)
+        res = @client_proxy.query(table, query_hash)
+        return res == false ? nil : res
     end
 
     def top_players(n)
-        @client_proxy.top_players(n)
+        res = @client_proxy.top_players(n)
+        return res == false ? nil : res
     end
 
     def _verify_initialize_pre_conditions(games_database_client_argument_hash)

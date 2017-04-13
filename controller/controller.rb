@@ -51,7 +51,7 @@ class Controller
         @next_player = @player_rank == 1 ? 2 : 1
 
         unless @player_move_observer.nil?
-            @player_move_observer.update(@game)
+            @player_move_observer.update(@game, @next_player)
         end
 
         _verify_player_update_model_postconditions
@@ -78,6 +78,10 @@ class Controller
 
     def set_player_move_observer(player_move_observer)
         @player_move_observer = player_move_observer
+    end
+
+    def set_rank(player_rank)
+        @player_rank = player_rank
     end
 
     def set_refresh_client(refresh_client)
