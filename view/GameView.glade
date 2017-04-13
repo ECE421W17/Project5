@@ -35,15 +35,7 @@
                       <object class="GtkMenuItem" id="menuitem2">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label">New 1 Player Connect4</property>
-                        <property name="use_underline">True</property>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkMenuItem" id="menuitem3">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label">New 2 Player Connect4</property>
+                        <property name="label">New Practice Connect4</property>
                         <property name="use_underline">True</property>
                       </object>
                     </child>
@@ -51,7 +43,21 @@
                       <object class="GtkMenuItem" id="menuitem5">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label">New 1 Player OttoNToot</property>
+                        <property name="label">New Practice OttoNToot</property>
+                        <property name="use_underline">True</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkSeparatorMenuItem" id="separatormenuitem1">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="menuitem3">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label">New Challenge Connect4</property>
                         <property name="use_underline">True</property>
                       </object>
                     </child>
@@ -59,12 +65,12 @@
                       <object class="GtkMenuItem" id="menuitem6">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label">New 2 Player OttoNToot</property>
+                        <property name="label">New Challenge OttoNToot</property>
                         <property name="use_underline">True</property>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkSeparatorMenuItem" id="separatormenuitem1">
+                      <object class="GtkSeparatorMenuItem" id="separatormenuitem2">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                       </object>
@@ -83,66 +89,28 @@
               </object>
             </child>
             <child>
-              <object class="GtkMenuItem" id="LeaderBoardMenu">
+              <object class="GtkMenuItem" id="OptionMenu">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Leader Board</property>
+                <property name="label" translatable="yes">Option</property>
                 <property name="use_underline">True</property>
                 <child type="submenu">
-                  <object class="GtkMenu" id="leaderBoardsubmenu">
+                  <object class="GtkMenu" id="Optionsubmenu">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkMenuItem" id="LeaderBoardT10MenuItem">
+                      <object class="GtkMenuItem" id="LeaderBoardMenuItem">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label">Top 10</property>
+                        <property name="label">Leader Board</property>
                         <property name="use_underline">True</property>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkMenuItem" id="LeaderBoardCustomizeMenuItem">
+                      <object class="GtkMenuItem" id="HistoryMenuItem">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label">Customize</property>
-                        <property name="use_underline">True</property>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-              </object>
-            </child>
-            <child>
-              <object class="GtkMenuItem" id="HistoryMenu">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">View History</property>
-                <property name="use_underline">True</property>
-                <child type="submenu">
-                  <object class="GtkMenu" id="Historysubmenu">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <child>
-                      <object class="GtkMenuItem" id="HistoryAllMenuItem">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label">All</property>
-                        <property name="use_underline">True</property>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkMenuItem" id="HistoryFinishMenuItem">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label">Finished Game</property>
-                        <property name="use_underline">True</property>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkMenuItem" id="HistoryUnfinishMenuItem">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label">Unfinish Game</property>
+                        <property name="label">History</property>
                         <property name="use_underline">True</property>
                       </object>
                     </child>
