@@ -79,9 +79,16 @@ class GameBoard
     History.new.show_glade()
   end
 
+  def resumeMenuItem__activate(*args)
+    alert 'Resume Game'
+  end
+
+  def refreshbutton__clicked(*args)
+    alert "Refresh game"
+  end
+
   def quit__activate(*args)
     @builder["window1"].destroy
-    
   end
 
   def setUpTheBoard (gameType = :OttoNToot, virtual_player = false)
