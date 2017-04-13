@@ -1,7 +1,8 @@
 require "vrlib"
+require_relative "../server/game_client"
 
 class ActiveUser < VR::ListView
- 
+
   include GladeGUI
 
   def before_show()
@@ -10,7 +11,8 @@ class ActiveUser < VR::ListView
 
   end
 
-  def initialize
+  def initialize(client)
+    @client = client
     @cols = {}
     @cols[:UserId] = String
     @cols[:select] = TrueClass
@@ -18,17 +20,17 @@ class ActiveUser < VR::ListView
     refresh()
     self.visible = true
   end
-  
+
   def refresh()
     model.clear
-    data = get_data()
+    data = @client.get_online_players
     (0..data.length-1).each do |i|
       row = model.append
       row[id(:UserId)] = data[i][0]
       row[id(:select)] = false;
     end
   end
-  
+
   def get_data
     row = []
     row << ["A"]

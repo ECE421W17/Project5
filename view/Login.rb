@@ -16,16 +16,16 @@ class Login
 
   def buttonShow__clicked(*args)
     get_glade_variables() #sets values of @name, @address etc. to values from glade form.
-    gameboard = GameBoard.new
-    gameboard.screen_name = @screen_name
-    gameboard.show_glade(self)
-    # gameboard.setup_client(@screen_name, @database_ip, @database_port, @local_port)
-    # gameboard.show_glade
-    # @builder["window1"].destroy
-    # @screen_name @database_ip @database_port @local_port
+    GameBoard.new(@screen_name, @database_ip, @database_port, @local_port).show_glade
+    @builder["buttonShow"].visible = false
+    @builder["buttonCancel"].label = "Logout"
   end
 
+  def buttonCancel__clicked(*args)
+    @builder["window1"].destroy
+  end
 
 end
 
 Login.new.show_glade()
+# GameBoard.new("a", "172.28.77.251", 8080, 8081).show_glade()
