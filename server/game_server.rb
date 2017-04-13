@@ -4,7 +4,7 @@ require 'test/unit/assertions'
 require 'xmlrpc/server'
 require 'yaml'
 
-require_relative '../controller/controller' # TODO: Rename
+require_relative '../controller/controller'
 
 include Test::Unit::Assertions
 
@@ -28,13 +28,13 @@ class PlayerMoveObserver
         @games_database_port = games_database_port
         @game_uuid = game_uuid
 
-        # TODO: Remove? Unused
+        # TODO: Interact with the game server instead of the database server directly?
+        # NOTE: These parameters are unused otherwise
         @game_server_ip = game_server_ip
         @game_server_port = game_server_port
     end
 
     def update(game)
-        # TODO: Don't interact with DB directly *****
         games_database_client = XMLRPC::Client.new3(
             {:host => @games_database_ip, :port => @games_database_port})
 

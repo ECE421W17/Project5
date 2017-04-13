@@ -3,6 +3,7 @@ require 'socket'
 require 'xmlrpc/client'
 require 'yaml' # TODO: Remove?
 
+require_relative '../db/games_database_client' # TODO: Remove?
 require_relative 'game_client'
 require_relative 'game_server'
 
@@ -19,6 +20,10 @@ class CLI
 
         @client = GameClient.new(
             {:game_server_ip => @local_ip_address, :game_server_port => game_server_port})
+
+        @games_database_client = GamesDatabaseClient.new(
+            {:games_database_server_ip => games_database_server_ip,
+                :games_database_server_port => games_database_server_port})
     end
 
     def launch_local_game_server(screen_name, games_database_server_ip, games_database_server_port, game_server_port)
@@ -92,6 +97,11 @@ class CLI
             end
 
             puts @tmp_controller.refresh
+        # TODO: Remove command - testing
+        when 'test'
+            res = @games_database_client.query(
+                :PROGRESS, {:uuid => '3a6b151d-d0fa-46c3-8d6a-145059a27522'})
+            pp res
         else
             puts "ERROR: Unrecognized command"
         end

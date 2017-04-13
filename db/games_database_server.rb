@@ -46,11 +46,21 @@ class GamesDatabaseServerHandler
         return true
     end
 
+    def query(table, query_hash)
+        converted_query_hash = _convert_hash_keys_to_symbols(query_hash)
+
+        return @games_database.query(table.to_sym, converted_query_hash)
+    end
+
     def unregister_game_server(game_server_address)
         @games_database.remove_game_server(game_server_address)
 
         # TODO: Add verification?
         return true
+    end
+
+    def _convert_hash_keys_to_symbols(hash)
+        Hash[hash.map { |key, value| [key.to_sym, value] }]
     end
 end
 
