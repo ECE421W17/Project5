@@ -20,6 +20,13 @@ class GameBoard
     GameBoard.new.show_glade
   end
 
+  def initialize(screen_name, ip, dbport, port)
+    @screen_name = screen_name
+    @database_ip = ip
+    @database_port = dbport
+    @local_port = port
+  end
+  
   def before_show
     print @screen_name
     @window1 = "GameBoard"
@@ -73,6 +80,14 @@ class GameBoard
 
   def quit__activate(*args)
     @builder["window1"].destroy
+  end
+
+  def resumeMenuItem__activate(*args)
+    alert 'Resume Game'
+  end
+
+  def refreshbutton__clicked(*args)
+    alert "Refresh game"
   end
 
   def setUpTheBoard (gameType = :OttoNToot, virtual_player = false)
