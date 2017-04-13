@@ -29,10 +29,18 @@ class GameBoard
 
   def menuitem2__activate(*args)
     alert "New Practice Connect4"
+    @controller = Controller.new([self], :Connect4, :ONE_PLAYER, 1)
+    0.upto(41) { |i|
+       @builder.get_object("button[" + i.to_s + "]").set_label("")
+    }
   end
 
   def menuitem5__activate(*args)
     alert "New Practice OttoNToot"
+    @controller = Controller.new([self], :OttoNToot, :ONE_PLAYER, 1)
+    0.upto(41) { |i|
+       @builder.get_object("button[" + i.to_s + "]").set_label("")
+    }
   end
 
   def menuitem3__activate(*args)
