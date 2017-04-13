@@ -22,6 +22,25 @@ class GamesDatabaseServerHandler
         @games_database.available_servers
     end
 
+    def get_suspended_games(screen_name)
+        as_p1 = @games_database.query(:PROGRESS, {:p1 => screen_name})
+        as_p2 = @games_database.query(:PROGRESS, {:p2 => screen_name})
+        results = as_p1 + as_p2
+
+        if results.nil?
+            return false
+        end
+
+        # new_hashes = results.map { |result| {:uuid => result[:uuid],
+        #     :serialized_game => result[:serialized_game],
+        #         :opponent => result[:p1] == @local_screen_name ? result[:p2] : result[:p1],
+        #             :next_player_to_move => result[:next_player_to_move]} }
+
+        # return new_hashes.nil? ? false : new_hashes
+
+        return results
+    end
+
     def games_won_by(screen_name)
         res = @games_database.games_won_by(screen_name)
         return res.nil? ? false : res
@@ -41,7 +60,7 @@ class GamesDatabaseServerHandler
     end
 
     def set_game(game_uuid, serialized_game, player_1_screen_name, player_2_screen_name,
-        next_player_to_move)
+        next_player_to_move, game_type)
         if get_game(game_uuid) != false
             res = @games_database.query(:PROGRESS, {:uuid => game_uuid})
 
@@ -49,14 +68,14 @@ class GamesDatabaseServerHandler
                 @games_database.update(
                     :PROGRESS, res[0][:id], {:uuid => game_uuid, :serialized_game => serialized_game,
                         :p1 => player_1_screen_name, :p2 => player_2_screen_name,
-                            :next_player_to_move => next_player_to_move})
+                            :next_player_to_move => next_player_to_move, :game_type => game_type})
             else
                 return false
             end
         else
             @games_database.create(:PROGRESS, {:uuid => game_uuid, :serialized_game => serialized_game,
                         :p1 => player_1_screen_name, :p2 => player_2_screen_name,
-                            :next_player_to_move => next_player_to_move})
+                            :next_player_to_move => next_player_to_move, :game_type => game_type})
         end
 
         return true

@@ -38,7 +38,7 @@ class PlayerMoveObserver
         @game_server_port = game_server_port
     end
 
-    def update(game, next_player_to_move_rank)
+    def update(game, next_player_to_move_rank, game_type)
         games_database_client = XMLRPC::Client.new3(
             {:host => @games_database_ip, :port => @games_database_port})
 
@@ -47,8 +47,10 @@ class PlayerMoveObserver
         next_player_to_move = next_player_to_move_rank == 1 ?
             @player_1_screen_name : @player_2_screen_name
 
+        puts "Updating: player 1: #{@player_1_screen_name}, player 2: #{@player_2_screen_name}"
+
         games_database_client.call("gamesDatabaseServerHandler.set_game", @game_uuid, serialized_game,
-            @player_1_screen_name, @player_2_screen_name, next_player_to_move)
+            @player_1_screen_name, @player_2_screen_name, next_player_to_move, game_type)
     end
 end
 
@@ -134,19 +136,56 @@ class GameServerHandler
 
             if remote_screen_name == other_screen_name
                 if proxy.process_accepted_challenge(@local_screen_name)
+                    puts 'Here'
+
                     game_uuid = @incoming_challenges[other_screen_name][:game_uuid]
-                    game_type = @incoming_challenges[other_screen_name][:game_type]
+                    is_new_game = @incoming_challenges[other_screen_name][:is_new_game]
+
+                    if is_new_game
+                        puts 'New game'
+
+                        game_type = @incoming_challenges[other_screen_name][:game_type]
+
+                        mv = MockView.new
+                        controller = Controller.new([mv], game_type, :TWO_PLAYER, 1)
+
+                        player_move_observer = @player_move_observer_factory
+                            .create_player_move_observer(game_uuid, @local_screen_name, other_screen_name)
+                        controller.set_player_move_observer(player_move_observer)
+
+                        refresh_client = @refresh_client_factory.create_refresh_client(game_uuid)
+                        controller.set_refresh_client(refresh_client)
+                    else
+                        suspended_games = get_suspended_games
+                        filtered_suspended_games = suspended_games.select { |suspended_game| suspended_game['uuid'] == game_uuid }
+
+                        if filtered_suspended_games.empty?
+                            return false
+                        end
+
+                        suspended_game = filtered_suspended_games[0]
+
+                        game = YAML::load(suspended_game['serialized_game'])
+                        game_type = suspended_game['game_type']
+                        local_player_rank = @local_screen_name == suspended_game['p1'] ? 1 : 2 
+                        next_player_rank = suspended_game['next_player_to_move'] == suspended_game['p1'] ? 1 : 2
+
+                        mv = MockView.new
+                        controller = Controller.new([mv], game_type, :TWO_PLAYER, local_player_rank)
+
+                        player_move_observer = @player_move_observer_factory
+                            .create_player_move_observer(
+                                game_uuid, suspended_game['p1'], suspended_game['p2'])
+                        controller.set_player_move_observer(player_move_observer)
+
+                        refresh_client = @refresh_client_factory.create_refresh_client(game_uuid)
+                        controller.set_refresh_client(refresh_client)
+
+                        controller.set_game(game)
+                        controller.set_next_player_rank(next_player_rank)
+                    end
+
                     @incoming_challenges.delete(other_screen_name)
-
-                    mv = MockView.new
-                    controller = Controller.new([mv], game_type, :TWO_PLAYER, 1)
-
-                    player_move_observer = @player_move_observer_factory
-                        .create_player_move_observer(game_uuid, @local_screen_name, other_screen_name)
-                    controller.set_player_move_observer(player_move_observer)
-
-                    refresh_client = @refresh_client_factory.create_refresh_client(game_uuid)
-                    controller.set_refresh_client(refresh_client)
                 end
             end
         }
@@ -181,7 +220,7 @@ class GameServerHandler
             end
 
             if remote_screen_name == screen_name
-                if proxy.process_challenge(@local_screen_name, game_uuid, game_type)
+                if proxy.process_challenge(@local_screen_name, game_uuid, game_type, true)
                     @outgoing_challenges.push(screen_name)
 
                     mv = MockView.new
@@ -229,20 +268,127 @@ class GameServerHandler
 
         return players
     end
+
+    def get_suspended_games
+        @suspended_games = @games_database_server_handler_proxy.get_suspended_games(@local_screen_name)
+    end
+
+    def resume_suspended_game(game_uuid)
+        _verify_resume_suspended_game_preconditions(game_uuid)
+
+        suspended_games = @suspended_games.select { |suspended_game| suspended_game['uuid'] == game_uuid }
+
+        if suspended_games.empty?
+            return false
+        end
+
+        suspended_game = suspended_games[0]
+
+        game = YAML::load(suspended_game['serialized_game'])
+
+        puts "B"
+
+        game_type = suspended_game['game_type']
+        
+        puts "C"
+
+        local_player_rank = @local_screen_name == suspended_game['p1'] ? 1 : 2 
+
+        # TODO: Figure out why this is wrong? *****
+        next_player_rank = suspended_game['next_player_to_move'] == suspended_game['p1'] ? 1 : 2
+        other_screen_name = @local_screen_name == suspended_game['p1'] ?
+            suspended_game['p2'] : suspended_game['p1']
+
+        puts "HERE"
+
+        controller = nil
+
+        available_game_server_ips = _get_available_game_server_ips
+        available_game_server_ips.each { |game_server_ip|
+            puts "IN LOOP"
+            
+            ip, port = game_server_ip["address"].split(':')
+            port = port.to_i
+
+            # TODO: Catch timeout exception
+            # TODO: Should be storing these clients in a list, rather than reconnecting every time?
+            proxy = GameClient.new({:game_server_ip => ip, :game_server_port => port})
+                .proxy("gameServerHandler")
+
+            puts "HERE AGAIN"
+
+            remote_screen_name = proxy.get_screen_name
+
+            puts "*****"
+
+            puts "Remote screen name: #{remote_screen_name}"
+            puts "Local screen name: #{@local_screen_name}"
+
+            if remote_screen_name == @local_screen_name
+                next
+            end
+
+            puts "!!!!!"
+
+            if remote_screen_name == other_screen_name
+                puts "ASDF"
+
+                # Add 'new game boolean' parameter
+                puts "#{@local_screen_name}, #{game_uuid}, #{game_type}"
+
+                if proxy.process_challenge(@local_screen_name, game_uuid, game_type, false)
+                    @outgoing_challenges.push(other_screen_name)
+
+                    puts "HERE TWO"
+
+                    mv = MockView.new
+                    controller = Controller.new([mv], game_type, :TWO_PLAYER, local_player_rank)
+
+                    player_move_observer = @player_move_observer_factory
+                        .create_player_move_observer(game_uuid, suspended_game['p1'],
+                            suspended_game['p2'])
+                    controller.set_player_move_observer(player_move_observer)
+
+                    refresh_client = @refresh_client_factory.create_refresh_client(game_uuid)
+                    controller.set_refresh_client(refresh_client)
+
+                    controller.set_game(game)
+                    controller.set_next_player_rank(next_player_rank)
+
+                    break
+                end
+
+                puts "Inner cond false"
+            end
+        }
+
+        puts "Out of loop"
+
+        _verify_resume_suspended_game_postconditions
+
+        return controller.nil? ? false : YAML::dump(controller)
+    end
     # *****
 
     # *****
     # Remote functions:
     def get_screen_name
-        return @local_screen_name.nil? ? false : @local_screen_name
+        res = @local_screen_name.nil? ? false : @local_screen_name
+
+        puts "In get screen name, res: #{res}"
+
+        return res
     end
 
-    def process_challenge(other_screen_name, game_uuid, game_type)
+    def process_challenge(other_screen_name, game_uuid, game_type, is_new_game)
+        puts "In process challenge"
+
         unless !@incoming_challenges.has_key?(other_screen_name)
             return false
         end
 
-        @incoming_challenges[other_screen_name] = {:game_uuid => game_uuid, :game_type => game_type}
+        @incoming_challenges[other_screen_name] = {:game_uuid => game_uuid, :game_type => game_type,
+            :is_new_game => is_new_game}
 
         return true
     end
@@ -286,6 +432,17 @@ class GameServerHandler
     end
 
     def _verify_accept_challenge_postconditions
+    end
+
+    def _verify_resume_suspended_game_preconditions(game_uuid)
+        puts "UUID: #{game_uuid}"
+
+        suspended_games = get_suspended_games
+        assert(suspended_games.any? { |suspended_game| suspended_game['uuid'] == game_uuid },
+            'There is no suspended game with the given uuid')
+    end
+
+    def _verify_resume_suspended_game_postconditions
     end
 end
 

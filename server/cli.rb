@@ -71,6 +71,9 @@ class CLI
         when 'list-players'
             res = @client.get_online_players
             pp res
+        when 'list-suspended'
+            res = @client.get_suspended_games
+            pp res
         when 'make-move'
             unless !@tmp_controller.nil?
                 raise "ERROR: Controller not initialized"
@@ -97,6 +100,14 @@ class CLI
             end
 
             puts @tmp_controller.refresh
+        when 'resume-suspended'
+            split_arguments = arguments.split(" ")
+            if split_arguments.length != 1
+                puts "ERROR: Missing argument(s)"
+                return
+            end
+
+            @tmp_controller = @client.resume_suspended_game(split_arguments[0])
         # TODO: Remove command - testing
         when 'test'
             # res = @games_database_client.query(

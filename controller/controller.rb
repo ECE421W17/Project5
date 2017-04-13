@@ -20,6 +20,7 @@ class Controller
         _verify_initialize_preconditions(game_mode, player_rank)
 
         @game_mode = game_mode
+        @game_type = game_type
         @player_rank = player_rank
         @views = views
 
@@ -70,11 +71,19 @@ class Controller
         end
 
         unless @player_move_observer.nil?
-            @player_move_observer.update(@game, @next_player)
+            @player_move_observer.update(@game, @next_player, @game_type)
         end
 
         _verify_player_update_model_postconditions
 	end
+
+    def set_next_player_rank(rank)
+        _verify_set_next_player_rank_preconditions(rank)
+
+        @next_player = rank
+
+        _verify_set_next_player_rank_postconditions
+    end
 
     def refresh
         _verify_refresh_preconditions
@@ -95,13 +104,17 @@ class Controller
         _verify_refresh_postconditions
     end
 
+    def set_game(game)
+        @game = game
+    end
+
     def set_player_move_observer(player_move_observer)
         @player_move_observer = player_move_observer
     end
 
-    def set_rank(player_rank)
-        @player_rank = player_rank
-    end
+    # def set_rank(player_rank)
+    #     @player_rank = player_rank
+    # end
 
     def set_refresh_client(refresh_client)
         @refresh_client = refresh_client
@@ -133,5 +146,15 @@ class Controller
     end
 
     def _verify_refresh_postconditions
+    end
+
+    def _verify_set_next_player_rank_preconditions(player_rank)
+        assert(player_rank.respond_to? :to_i, 'Given player rank cannot be converted to an integer')
+
+        player_rank_i = player_rank.to_i
+        assert(player_rank_i > 0 && player_rank_i < 3, 'Player rank must be 1 or 2')
+    end
+
+    def _verify_set_next_player_rank_postconditions
     end
 end
