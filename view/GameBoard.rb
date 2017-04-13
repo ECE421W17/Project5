@@ -6,6 +6,14 @@ require_relative "ResumeGameList"
 require_relative "Challenger"
 require_relative '../controller/controller'
 
+require 'pp'
+require 'socket'
+require 'xmlrpc/client'
+require 'yaml' # TODO: Remove?
+
+require_relative '../server/game_client'
+require_relative '../server/game_server'
+
 class GameBoard
 
   attr_accessor :screen_name, :database_ip, :database_port, :local_port
@@ -17,18 +25,6 @@ class GameBoard
     assert(@controller, "There must be a controller")
   end
 
-  def setup_client(screen_name, database_ip, database_port, local_port)
-    print screen_name
-    GameBoard.new.show_glade
-  end
-
-  def initialize(screen_name, ip, dbport, port)
-    @screen_name = screen_name
-    @database_ip = ip
-    @database_port = dbport
-    @local_port = port
-  end
-  
   def before_show
     print @screen_name
     @window1 = "GameBoard"
@@ -42,6 +38,34 @@ class GameBoard
 
     @red = "red"
     @blue = "blue"
+  end
+
+  def initialize(screen_name, database_ip, database_port, local_port)
+    screen_name = "a"
+    database_ip = "172.28.77.251"
+    database_port = 8080
+    local_port = 8081
+    launch_local_game_server(screen_name, database_ip, database_port, local_port)
+
+    # TODO: Extract address to global scope
+    # TODO: Wait for server to come up?...
+
+    @local_ip_address =
+        Socket.ip_address_list.find { |ai| ai.ipv4? && !ai.ipv4_loopback? }.ip_address
+
+    @client = GameClient.new(
+        {:game_server_ip => @local_ip_address, :game_server_port => local_port})
+  end
+
+  def launch_local_game_server(screen_name, games_database_server_ip, games_database_server_port, game_server_port)
+      @local_server_pid = Process.fork do
+          # TODO: Extract address to global scope
+          gs = GameServer.new(
+              {:games_database_ip => games_database_server_ip,
+                  :games_database_port => games_database_server_port,
+                      :game_server_port => game_server_port, :screen_name => screen_name})
+          gs.serve
+      end
   end
 
   def menuitem2__activate(*args)
@@ -62,13 +86,13 @@ class GameBoard
 
   def menuitem3__activate(*args)
     alert "New Challenge Connect4"
-    ActiveUser.new.show_glade()
+    ActiveUser.new(@client).show_glade()
 
   end
 
   def menuitem6__activate(*args)
     alert "New Challenge OttoNToot"
-    ActiveUser.new.show_glade()
+    ActiveUser.new(@client).show_glade()
 
   end
 
@@ -81,6 +105,10 @@ class GameBoard
   end
 
   def quit__activate(*args)
+    if @local_server_pid
+      print "killing...\n"
+      Process.kill('KILL', @local_server_pid)
+    end
     @builder["window1"].destroy
   end
 
