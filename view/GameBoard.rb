@@ -6,6 +6,8 @@ require_relative '../controller/controller'
 
 class GameBoard
 
+  attr_accessor :screen_name, :database_ip, :database_port, :local_port
+
   include GladeGUI
 
   def check_class_invariants
@@ -13,7 +15,13 @@ class GameBoard
     assert(@controller, "There must be a controller")
   end
 
-  def before_show()
+  def setup_client(screen_name, database_ip, database_port, local_port)
+    print screen_name
+    GameBoard.new.show_glade
+  end
+
+  def before_show
+    print @screen_name
     @window1 = "GameBoard"
     arr = Array.new(42)
 
@@ -133,5 +141,3 @@ class GameBoard
   end
 
 end
-
-GameBoard.new.show_glade()
