@@ -1,8 +1,7 @@
 require "vrlib"
-require_relative "../server/game_client"
 
-class ActiveUser < VR::ListView
-
+class ResumeGameList < VR::ListView
+ 
   include GladeGUI
 
   def before_show()
@@ -11,40 +10,40 @@ class ActiveUser < VR::ListView
 
   end
 
-  def initialize(client)
-    @client = client
+  def initialize
     @cols = {}
-    @cols[:UserId] = String
+    @cols[:GameId] = String
+    @cols[:OppoentID] = String
     super(@cols)
     refresh()
     self.visible = true
   end
-
+  
   def refresh()
     model.clear
-    data = @client.get_online_players
+    data = get_data()
     (0..data.length-1).each do |i|
       row = model.append
-      row[id(:UserId)] = data[i][0]
+      row[id(:GameId)] = data[i][0]
+      row[id(:Oppoent_ID)] = data[i][1]
     end
   end
-
+  
   def get_data
     row = []
-    row << ["A"]
-    row << ["B"]
+    row << ["A", "User1"]
+    row << ["B", "User2"]
+    row << ["C", "User3"]
+  end
 
-    row << ["C"]
+  def refreshResumeGame__clicked(*args)
+    alert "refresh"
   end
 
   def self__row_activated(*args)
     return unless rows = selected_rows
     row = rows[0]
-    alert "You challenge #{row[:UserId]}"
+    alert "You select GameId #{row[:GameId]}, Oppoent #{row[:OppoentID]}}"
   end
-
-  def refreshActiveUser__clicked(*args)
-    alert "refresh"
-  end
-
 end
+

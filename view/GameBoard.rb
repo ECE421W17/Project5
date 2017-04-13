@@ -2,6 +2,8 @@ require "vrlib"
 require_relative "LeaderBoardView"
 require_relative "History"
 require_relative "ActiveUser"
+require_relative "ResumeGameList"
+require_relative "Challenger"
 require_relative '../controller/controller'
 
 require 'pp'
@@ -108,6 +110,18 @@ class GameBoard
       Process.kill('KILL', @local_server_pid)
     end
     @builder["window1"].destroy
+  end
+
+  def resumeMenuItem__activate(*args)
+    ResumeGameList.new.show_glade()
+  end
+
+  def refreshbutton__clicked(*args)
+    alert "Refresh game"
+  end
+
+  def challengeMenuItem__activate(*args)
+    Challenger.new.show_glade()
   end
 
   def setUpTheBoard (gameType = :OttoNToot, virtual_player = false)
