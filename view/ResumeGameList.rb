@@ -25,7 +25,7 @@ class ResumeGameList < VR::ListView
     (0..data.length-1).each do |i|
       row = model.append
       row[id(:GameId)] = data[i][0]
-      row[id(:Oppoent_ID)] = data[i][1]
+      row[id(:OppoentID)] = data[i][1]
     end
   end
   
