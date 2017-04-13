@@ -99,8 +99,10 @@ class CLI
             puts @tmp_controller.refresh
         # TODO: Remove command - testing
         when 'test'
-            res = @games_database_client.query(
-                :PROGRESS, {:uuid => '3a6b151d-d0fa-46c3-8d6a-145059a27522'})
+            # res = @games_database_client.query(
+            #     :PROGRESS, {:uuid => '3a6b151d-d0fa-46c3-8d6a-145059a27522'})
+            # res = @games_database_client.top_players(1)
+            res = @games_database_client.games_won_by('a')
             pp res
         else
             puts "ERROR: Unrecognized command"

@@ -19,18 +19,16 @@ class GamesDatabaseClient
         @client_proxy.games_won_by(screen_name)
     end
 
-    def top_players(n)
-        @client_proxy.top_players(n)
+    def proxy(path)
+        @client.proxy(path)
     end
 
     def query(table, query_hash)
-        puts 'In query...'
-
         @client_proxy.query(table, query_hash)
     end
 
-    def proxy(path)
-        @client.proxy(path)
+    def top_players(n)
+        @client_proxy.top_players(n)
     end
 
     def _verify_initialize_pre_conditions(games_database_client_argument_hash)

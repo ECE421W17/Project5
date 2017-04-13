@@ -22,6 +22,17 @@ class GamesDatabaseServerHandler
         @games_database.available_servers
     end
 
+    def games_won_by(screen_name)
+        res = @games_database.games_won_by(screen_name)
+        return res.nil? ? false : res
+    end
+
+    def query(table, query_hash)
+        converted_query_hash = _convert_hash_keys_to_symbols(query_hash)
+
+        return @games_database.query(table.to_sym, converted_query_hash)
+    end
+
     def register_game_server(game_server_address)
         @games_database.register_game_server(game_server_address)
 
@@ -46,10 +57,12 @@ class GamesDatabaseServerHandler
         return true
     end
 
-    def query(table, query_hash)
-        converted_query_hash = _convert_hash_keys_to_symbols(query_hash)
+    def top_players(n)
+        res = @games_database.top_players(n)
 
-        return @games_database.query(table.to_sym, converted_query_hash)
+        contains_non_nil_values = res.any? { |value| !value.nil? }
+
+        return contains_non_nil_values ? res : false
     end
 
     def unregister_game_server(game_server_address)
