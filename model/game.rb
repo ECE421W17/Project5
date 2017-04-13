@@ -68,6 +68,10 @@ class Game
         check_class_invariants
     end
 
+    def get_board
+        @board
+    end
+
     def make_move_pre_cond(player_number, col)
         index = player_number - 1
         assert(0 <= index && index < @players.length, "There is no player #{player_number}")
@@ -94,6 +98,10 @@ class Game
         notify_observers(@board.positions, winner)
 
         make_move_post_cond
+    end
+
+    def set_board(new_board)
+        @board = new_board
     end
 
     def winner

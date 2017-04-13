@@ -1,0 +1,13 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    xmlrpc (0.3.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  xmlrpc
+
+BUNDLED WITH
+   1.14.6
