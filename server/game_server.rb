@@ -4,7 +4,7 @@ require 'test/unit/assertions'
 require 'xmlrpc/server'
 require 'yaml'
 
-require_relative '../controller/controller' # TODO: Rename
+require_relative '../controller/controller'
 
 include Test::Unit::Assertions
 
@@ -16,31 +16,39 @@ class PlayerMoveObserverFactory
         @game_server_port = game_server_port
     end
 
-    def create_player_move_observer(game_uuid)
+    def create_player_move_observer(game_uuid, player_1_screen_name, player_2_screen_name)
         PlayerMoveObserver.new(
-            @games_database_ip, @games_database_port, @game_server_ip, @game_server_port, game_uuid)
+            @games_database_ip, @games_database_port, @game_server_ip, @game_server_port, game_uuid,
+                player_1_screen_name, player_2_screen_name)
     end
 end
 
 class PlayerMoveObserver
-    def initialize(games_database_ip, games_database_port, game_server_ip, game_server_port, game_uuid)
+    def initialize(games_database_ip, games_database_port, game_server_ip, game_server_port, game_uuid,
+            player_1_screen_name, player_2_screen_name)
         @games_database_ip = games_database_ip
         @games_database_port = games_database_port
         @game_uuid = game_uuid
+        @player_1_screen_name = player_1_screen_name
+        @player_2_screen_name = player_2_screen_name
 
-        # TODO: Remove? Unused
+        # TODO: Interact with the game server instead of the database server directly?
+        # NOTE: These parameters are unused otherwise
         @game_server_ip = game_server_ip
         @game_server_port = game_server_port
     end
 
-    def update(game)
-        # TODO: Don't interact with DB directly *****
+    def update(game, next_player_to_move_rank)
         games_database_client = XMLRPC::Client.new3(
             {:host => @games_database_ip, :port => @games_database_port})
 
         serialized_game = YAML::dump(game)
 
-        games_database_client.call("gamesDatabaseServerHandler.set_game", @game_uuid, serialized_game)
+        next_player_to_move = next_player_to_move_rank == 1 ?
+            @player_1_screen_name : @player_2_screen_name
+
+        games_database_client.call("gamesDatabaseServerHandler.set_game", @game_uuid, serialized_game,
+            @player_1_screen_name, @player_2_screen_name, next_player_to_move)
     end
 end
 
@@ -94,7 +102,7 @@ class GameServerHandler
         @refresh_client_factory = refresh_client_factory
 
         @games_database_server_handler_proxy = games_database_client.proxy("gamesDatabaseServerHandler")
-        @screen_name = screen_name
+        @local_screen_name = screen_name
 
         @incoming_challenges = {}
         @outgoing_challenges = []
@@ -120,12 +128,12 @@ class GameServerHandler
             
             remote_screen_name = proxy.get_screen_name
 
-            if remote_screen_name == @screen_name
+            if remote_screen_name == @local_screen_name
                 next
             end
 
             if remote_screen_name == other_screen_name
-                if proxy.process_accepted_challenge(@screen_name)
+                if proxy.process_accepted_challenge(@local_screen_name)
                     game_uuid = @incoming_challenges[other_screen_name][:game_uuid]
                     game_type = @incoming_challenges[other_screen_name][:game_type]
                     @incoming_challenges.delete(other_screen_name)
@@ -134,7 +142,7 @@ class GameServerHandler
                     controller = Controller.new([mv], game_type, :TWO_PLAYER, 1)
 
                     player_move_observer = @player_move_observer_factory
-                        .create_player_move_observer(game_uuid)
+                        .create_player_move_observer(game_uuid, @local_screen_name, other_screen_name)
                     controller.set_player_move_observer(player_move_observer)
 
                     refresh_client = @refresh_client_factory.create_refresh_client(game_uuid)
@@ -168,19 +176,19 @@ class GameServerHandler
 
             remote_screen_name = proxy.get_screen_name
 
-            if remote_screen_name == @screen_name
+            if remote_screen_name == @local_screen_name
                 next
             end
 
             if remote_screen_name == screen_name
-                if proxy.process_challenge(@screen_name, game_uuid, game_type)
+                if proxy.process_challenge(@local_screen_name, game_uuid, game_type)
                     @outgoing_challenges.push(screen_name)
 
                     mv = MockView.new
                     controller = Controller.new([mv], game_type, :TWO_PLAYER, 2)
 
                     player_move_observer = @player_move_observer_factory
-                        .create_player_move_observer(game_uuid)
+                        .create_player_move_observer(game_uuid, screen_name, @local_screen_name)
                     controller.set_player_move_observer(player_move_observer)
 
                     refresh_client = @refresh_client_factory.create_refresh_client(game_uuid)
@@ -226,7 +234,7 @@ class GameServerHandler
     # *****
     # Remote functions:
     def get_screen_name
-        return @screen_name.nil? ? false : @screen_name
+        return @local_screen_name.nil? ? false : @local_screen_name
     end
 
     def process_challenge(other_screen_name, game_uuid, game_type)
