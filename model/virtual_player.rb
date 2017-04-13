@@ -61,7 +61,7 @@ class VirtualPlayer
 				winning_positions = board.pattern_found(oPlayer.getWinningPattern)
 				board.remove_piece(j, oPlayer.getCategory)
 				if !winning_positions
-					board.remove_piece(i, cPlayer.getCategory) 
+					board.remove_piece(i, cPlayer.getCategory)
 					return i
 				end
 			end

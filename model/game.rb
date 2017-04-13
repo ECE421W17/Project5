@@ -9,6 +9,8 @@ include Test::Unit::Assertions
 
 class Game
 
+  attr_accessor :board, :victory
+
     include Observable
     # Game passes the following information to its observers:
     # 1. The board positions, as a 2-dimensional array of nils and symbols
@@ -64,6 +66,8 @@ class Game
         end
         @ai = Object.const_get(ai)
 
+        @victory = nil
+
         initialize_post_cond
         check_class_invariants
     end
@@ -73,6 +77,10 @@ class Game
     end
 
     def make_move_pre_cond(player_number, col)
+      # print "player = " +player_number.to_s+ "\n"
+      # print "col = " +col.to_s+ "\n"
+      # print @board.valid_columns
+      # print "\n"
         index = player_number - 1
         assert(0 <= index && index < @players.length, "There is no player #{player_number}")
         assert(@board.valid_columns.include?(col), "Column #{col} is not valid")
@@ -110,7 +118,8 @@ class Game
         @players.each do |player|
             winning_positions = @board.pattern_found(player.winning_pattern)
             if winning_positions
-                return Victory.new(player, winning_positions)
+                @victory = Victory.new(player, winning_positions, player.winning_pattern)
+                return @victory
             end
         end
 

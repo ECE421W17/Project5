@@ -19,11 +19,12 @@ class Controller
     def initialize(views, game_type, game_mode, player_rank)
         _verify_initialize_preconditions(game_mode, player_rank)
 
+        @game_mode = game_mode
         @player_rank = player_rank
         @views = views
 
         game_mode = game_mode == :ONE_PLAYER ? '1Player' : '2Player'
-        
+
         @game = game_type == :Connect4 ?
             Connect4.new(views = @views, mode = game_mode) :
             OttoNToot.new(views = @views, mode = game_mode)
@@ -47,8 +48,26 @@ class Controller
 	def player_update_model(column_number)
         _verify_player_update_model_preconditions
 
+        if @game.board.column_full?(column_number)
+          return false
+        end
+
         @game.make_move(@next_player, column_number)
+        if @game.victory != nil
+          unless @player_move_observer.nil?
+              @player_move_observer.update(@game)
+          end
+
+          _verify_player_update_model_postconditions
+          return true
+        end
+
         @next_player = @player_rank == 1 ? 2 : 1
+
+        if @game_mode == :ONE_PLAYER && @next_player == 2
+          @game.make_move(@next_player, column_number)
+          @next_player = @next_player == 1 ? 2 : 1
+        end
 
         unless @player_move_observer.nil?
             @player_move_observer.update(@game)
@@ -59,7 +78,7 @@ class Controller
 
     def refresh
         _verify_refresh_preconditions
-        
+
         updated_game = @refresh_client.get_game
 
         if updated_game.nil?
@@ -86,7 +105,7 @@ class Controller
 
     def _verify_initialize_preconditions(game_mode, player_rank)
         assert(player_rank.respond_to? :to_i, 'Given player rank cannot be converted to an integer')
-        
+
         player_rank_i = player_rank.to_i
         assert(player_rank_i > 0 && player_rank_i < 3, 'Player rank must be 1 or 2')
 
