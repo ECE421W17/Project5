@@ -15,6 +15,14 @@ class GameBoard
     assert(@controller, "There must be a controller")
   end
 
+  def initialize(screen_name, ip, dbport, port)
+    @screen_name = screen_name
+    @database_ip = ip
+    @database_port = dbport
+    @local_port = port
+  end
+
+
   def setup_client(screen_name, database_ip, database_port, local_port)
     print screen_name
     GameBoard.new.show_glade
@@ -73,6 +81,7 @@ class GameBoard
 
   def quit__activate(*args)
     @builder["window1"].destroy
+    
   end
 
   def setUpTheBoard (gameType = :OttoNToot, virtual_player = false)
