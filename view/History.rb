@@ -23,7 +23,7 @@ class History < VR::ListView
   end
 
   def initialize(client, player)
-    @clinet = client
+    @client = client
     @player = player
     @cols = {}
     @cols[:GameID] = String

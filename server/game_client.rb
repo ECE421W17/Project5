@@ -46,8 +46,8 @@ class GameClient
         res
     end
 
-    def get_top_n_player(n)
-        res = @client_proxy.get_top_n_player(n)
+    def top_players(n)
+        res = @client_proxy.top_players(n)
         res
     end
 

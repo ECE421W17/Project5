@@ -27,7 +27,7 @@ class LeaderBoardView < VR::ListView
     @client = client
     @cols = {}
     @cols[:id] = String
-    @cols[:score] = String    
+    #@cols[:score] = String    
     # @cols[:c4_win] = String
     # @cols[:c4_lost] = String
     # @cols[:c4_WinPercent] = String
@@ -70,7 +70,8 @@ class LeaderBoardView < VR::ListView
   end
 
   def get_data
-    rows = @client.get_top_n_player(@TextEntryTopNumberOfPlayer)
+    rows = @client.top_players(@TextEntryTopNumberOfPlayer)
+    row
     # rows = []
     # rows << ["A", "0","0","0","0","1","1","1","1","2","2","2","2"]
     # rows << ["B", "1","1","1","1","2","2","2","2","3","3","3","3"]
