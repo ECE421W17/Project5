@@ -3,7 +3,7 @@ require 'xmlrpc/client'
 class GamesDatabaseClient
     def initialize(games_database_client_argument_hash)
         _verify_initialize_pre_conditions(games_database_client_argument_hash)
-        
+
         games_database_server_ip = games_database_client_argument_hash[:games_database_server_ip].to_s
         games_database_server_port =
             games_database_client_argument_hash[:games_database_server_port].to_i
@@ -40,7 +40,7 @@ class GamesDatabaseClient
         assert(games_database_client_argument_hash.has_key?(:games_database_server_port),
             'No Game Server port address specified')
 
-        assert(games_database_client_argument_hash[:games_server_ip].respond_to? :to_s,
+        assert(games_database_client_argument_hash[:games_database_server_ip].respond_to? :to_s,
             'The given Game Server IP cannot be converted to a string')
         assert(games_database_client_argument_hash[:games_database_server_port].respond_to? :to_i,
             'The given Game Server port number cannot be converted to an integer')

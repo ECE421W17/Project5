@@ -43,7 +43,7 @@ class GameBoard
 
   def initialize(screen_name, database_ip, database_port, local_port)
     @screen_name = "a"
-    database_ip = "172.28.103.88"
+    database_ip = "172.28.77.251"
     database_port = 8080
     local_port = 8081
     launch_local_game_server(@screen_name, database_ip, database_port, local_port)
@@ -56,13 +56,11 @@ class GameBoard
 
     @client = GameClient.new(
         {:game_server_ip => @local_ip_address, :game_server_port => local_port})
-    # @database_client = GamesDatabaseClient.new(
-    #     {:games_database_server_ip=>database_ip, :games_database_server_port=>database_port,
-    #        :games_server_ip=>database_ip, :games_database_server_port})
+    @database_client = GamesDatabaseClient.new(
+        {:games_database_server_ip=>database_ip, :games_database_server_port=>database_port})
   end
 
-  def launch_local_game_server(screen_name, games_database_server_ip, games_database_server_port,
-    game_server_port)
+  def launch_local_game_server(screen_name, games_database_server_ip, games_database_server_port, game_server_port)
       @local_server_pid = Process.fork do
           # TODO: Extract address to global scope
           gs = GameServer.new(
@@ -115,7 +113,7 @@ class GameBoard
   end
 
   def leaderboardmenuitem__activate(*args)
-    LeaderBoardView.new.show_glade(@client)
+    LeaderBoardView.new(@database_client).show_glade(@client)
   end
 
   def historymenuitem__activate(*args)
