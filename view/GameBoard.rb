@@ -97,8 +97,6 @@ class GameBoard
   def menuitem6__activate(*args)
     alert "New Challenge OttoNToot"
     ActiveUser.new(@client, :OttoNToot, @screen_name, lambda{|controller| @controller = controller
-      puts @controller.to_s
-      puts self.to_s
                                                              @controller.add_view(self)}).show_glade()
 
   end
@@ -117,7 +115,7 @@ class GameBoard
   end
 
   def historymenuitem__activate(*args)
-    History.new.show_glade()
+    History.new(@client).show_glade()
   end
 
   def quit__activate(*args)
