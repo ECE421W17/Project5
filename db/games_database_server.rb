@@ -8,6 +8,18 @@ class GamesDatabaseServerHandler
         @games_database = GamesDatabase.new
     end
 
+    def delete_game(game_uuid)
+        results = @games_database.query(:PROGRESS, {:uuid => game_uuid})
+
+        if results.empty?
+            return false
+        end
+
+        @games_database.delete(:PROGRESS, results[0][:id])
+
+        return true
+    end
+
     def get_game(game_uuid)
         res = @games_database.query(:PROGRESS, {:uuid => game_uuid})
 
@@ -56,6 +68,13 @@ class GamesDatabaseServerHandler
         @games_database.register_game_server(game_server_address)
 
         # TODO: Add verification?
+        return true
+    end
+
+    def save_game(game_uuid, serialized_game, player_1_screen_name, player_2_screen_name)
+        @games_database.create(:RESULT, {:uuid => game_uuid, :serialized_game => serialized_game,
+            :p1 => player_1_screen_name, :p2 => player_2_screen_name})
+
         return true
     end
 

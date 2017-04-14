@@ -16,11 +16,12 @@ class Controller
         assert(@game, 'The controller must have a game')
     end
 
-    def initialize(views, game_type, game_mode, player_rank)
+    def initialize(views, game_type, game_mode, player_rank, game_uuid)
         _verify_initialize_preconditions(game_mode, player_rank)
 
         @game_mode = game_mode
         @game_type = game_type
+        @game_uuid = game_uuid
         @player_rank = player_rank
         @views = views
 
@@ -45,6 +46,10 @@ class Controller
         @game
     end
 
+    def get_player_mode
+        @game.get_player_mode(@player_rank)
+    end
+
     # Views call this method in their event handlers
 	def player_update_model(column_number)
         _verify_player_update_model_preconditions
@@ -56,7 +61,7 @@ class Controller
         @game.make_move(@next_player, column_number)
         if @game.victory != nil
           unless @player_move_observer.nil?
-              @player_move_observer.update(@game)
+              @player_move_observer.update(@game, @next_player, @game_type)
           end
 
           _verify_player_update_model_postconditions
@@ -99,13 +104,26 @@ class Controller
             @next_player = @next_player == 1 ? 2 : 1
         end
 
-        @game.notify_observers(@game.get_board.positions, @game.winner)
+        @game.notify
+        
+        winner = @game.winner
+        if winner != nil
+            if winner.get_winner.category != @game.get_player_mode(@player_rank)
+                unless @write_finished_game_client.nil?
+                    @write_finished_game_client.write_game(@game_uuid, @game)
+                end
+            end
+        end
 
         _verify_refresh_postconditions
     end
 
     def set_game(game)
         @game = game
+    end
+
+    def set_write_finished_game_client(write_finished_game_client)
+        @write_finished_game_client = write_finished_game_client
     end
 
     def set_player_move_observer(player_move_observer)

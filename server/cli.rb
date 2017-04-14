@@ -7,6 +7,22 @@ require_relative '../db/games_database_client' # TODO: Remove?
 require_relative 'game_client'
 require_relative 'game_server'
 
+class StubView
+    def initialize(player_mode)
+        @player_mode = player_mode
+    end
+
+    def update(positions, victory)
+        if victory != nil
+            if victory.get_winner.category == @player_mode
+                puts 'Congratulations!!!! You won!!!'
+            else
+                puts 'Sorry!! You lost :('
+            end
+        end
+    end
+end
+
 class CLI
     def initialize(screen_name, games_database_server_ip, games_database_server_port, game_server_port)
         launch_local_game_server(
@@ -26,7 +42,8 @@ class CLI
                 :games_database_server_port => games_database_server_port})
     end
 
-    def launch_local_game_server(screen_name, games_database_server_ip, games_database_server_port, game_server_port)
+    def launch_local_game_server(screen_name, games_database_server_ip, games_database_server_port,
+        game_server_port)
         pid = Process.fork do
             # TODO: Extract address to global scope
             gs = GameServer.new(
@@ -57,6 +74,7 @@ class CLI
             end
 
             @tmp_controller = @client.accept_challenge(split_arguments[0])
+            @tmp_controller.add_view(StubView.new(@tmp_controller.get_player_mode()))
         when 'challenge-connect4'
             split_arguments = arguments.split(" ")
             if split_arguments.length != 1
@@ -65,6 +83,7 @@ class CLI
             end
 
             @tmp_controller = @client.issue_challenge(split_arguments[0], :Connect4)
+            @tmp_controller.add_view(StubView.new(@tmp_controller.get_player_mode()))
         when "list-challenges"
             res = @client.get_challenges
             pp res
@@ -108,13 +127,6 @@ class CLI
             end
 
             @tmp_controller = @client.resume_suspended_game(split_arguments[0])
-        # TODO: Remove command - testing
-        when 'test'
-            # res = @games_database_client.query(
-            #     :PROGRESS, {:uuid => '3a6b151d-d0fa-46c3-8d6a-145059a27522'})
-            # res = @games_database_client.top_players(1)
-            res = @games_database_client.games_won_by('a')
-            pp res
         else
             puts "ERROR: Unrecognized command"
         end

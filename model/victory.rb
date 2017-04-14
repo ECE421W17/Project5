@@ -16,6 +16,10 @@ class Victory
         assert(@pattern, 'Victory must have a winning pattern')
     end
 
+    def get_winner
+        @winner
+    end
+
     def initialize_pre_cond
     end
 
