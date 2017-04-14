@@ -44,6 +44,16 @@ class GameClient
         return controller == false ? nil : controller
     end
 
+    def history(player)
+        res = @client_proxy.history(player)
+        res
+    end
+
+    def get_top_n_player(n)
+        res = @client_proxy.get_top_n_player(n)
+        res
+    end
+
     def proxy(path)
         @client.proxy(path)
     end

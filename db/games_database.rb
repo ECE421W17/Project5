@@ -170,6 +170,11 @@ class GamesDatabase
         as_p1 + as_p2
     end
 
+    def history(player)
+        res = query(:RESULT, {:p1 => player})
+        res
+    end
+
     def top_players(n)
         top_players_pre_cond(n)
         # pre-made query that returns the top n players and their scores

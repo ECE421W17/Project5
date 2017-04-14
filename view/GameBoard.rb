@@ -112,7 +112,7 @@ class GameBoard
   end
 
   def historymenuitem__activate(*args)
-    History.new.show_glade()
+    History.new.show_glade(@client, @screen_name)
   end
 
   def quit__activate(*args)
