@@ -8,10 +8,10 @@ class Login
   attr_accessor :screen_name, :database_ip, :database_port, :local_port
 
   def initialize()
-    @screen_name = ""
-    @database_ip = ""
-    @database_port = ""
-    @local_port = ""
+    @screen_name = "a"
+    @database_ip = "172.28.103.88"
+    @database_port = "8080"
+    @local_port = "8081"
   end
 
   def buttonShow__clicked(*args)
