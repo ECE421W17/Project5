@@ -350,6 +350,10 @@ class GameServerHandler
         return true
     end
 
+    def get_top_n_player(n)
+        @games_database_server_handler_proxy.top_players(n)
+    end
+
     def process_accepted_challenge(other_screen_name)
         unless @outgoing_challenges.include? other_screen_name
             return false
@@ -360,6 +364,7 @@ class GameServerHandler
         return true
     end
     # *****
+
 
     def _get_available_game_server_ips
         @games_database_server_handler_proxy.get_game_server_ips

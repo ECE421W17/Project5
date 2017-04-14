@@ -2,9 +2,21 @@ require "vrlib"
 require_relative "LeaderBoardView"
 require_relative "History"
 require_relative "ActiveUser"
+require_relative "ResumeGameList"
+require_relative "Challenger"
 require_relative '../controller/controller'
 
+require 'pp'
+require 'socket'
+require 'xmlrpc/client'
+require 'yaml' # TODO: Remove?
+
+require_relative '../server/game_client'
+require_relative '../server/game_server'
+
 class GameBoard
+
+  attr_accessor :screen_name, :database_ip, :database_port, :local_port
 
   include GladeGUI
 
@@ -13,7 +25,8 @@ class GameBoard
     assert(@controller, "There must be a controller")
   end
 
-  def before_show()
+  def before_show
+    print @screen_name
     @window1 = "GameBoard"
     arr = Array.new(42)
 
@@ -25,6 +38,34 @@ class GameBoard
 
     @red = "red"
     @blue = "blue"
+  end
+
+  def initialize(screen_name, database_ip, database_port, local_port)
+    @screen_name = "a"
+    database_ip = "172.28.77.251"
+    database_port = 8080
+    local_port = 8081
+    launch_local_game_server(@screen_name, database_ip, database_port, local_port)
+
+    # TODO: Extract address to global scope
+    # TODO: Wait for server to come up?...
+
+    @local_ip_address =
+        Socket.ip_address_list.find { |ai| ai.ipv4? && !ai.ipv4_loopback? }.ip_address
+
+    @client = GameClient.new(
+        {:game_server_ip => @local_ip_address, :game_server_port => local_port})
+  end
+
+  def launch_local_game_server(screen_name, games_database_server_ip, games_database_server_port, game_server_port)
+      @local_server_pid = Process.fork do
+          # TODO: Extract address to global scope
+          gs = GameServer.new(
+              {:games_database_ip => games_database_server_ip,
+                  :games_database_port => games_database_server_port,
+                      :game_server_port => game_server_port, :screen_name => screen_name})
+          gs.serve
+      end
   end
 
   def menuitem2__activate(*args)
@@ -45,18 +86,28 @@ class GameBoard
 
   def menuitem3__activate(*args)
     alert "New Challenge Connect4"
-    ActiveUser.new.show_glade()
+    ActiveUser.new(@client, :Connect4, @screen_name, lambda{|controller| @controller = controller
+                                                            @controller.add_view(self)}).show_glade()
 
   end
 
   def menuitem6__activate(*args)
     alert "New Challenge OttoNToot"
-    ActiveUser.new.show_glade()
+    ActiveUser.new(@client, :OttoNToot, @screen_name, lambda{|controller| @controller = controller
+                                                             @controller.add_view(self)}).show_glade()
 
   end
 
+  def resumeMenuItem__activate(*args)
+    ResumeGameList.new.show_glade()
+  end
+
+  def challengeMenuItem__activate(*args)
+    Challenger.new.show_glade()
+  end
+
   def leaderboardmenuitem__activate(*args)
-    LeaderBoardView.new.show_glade()
+    LeaderBoardView.new.show_glade(@client)
   end
 
   def historymenuitem__activate(*args)
@@ -64,7 +115,14 @@ class GameBoard
   end
 
   def quit__activate(*args)
+    if @local_server_pid
+      Process.kill('KILL', @local_server_pid)
+    end
     @builder["window1"].destroy
+  end
+
+  def refreshbutton__clicked(*args)
+      @controller.refresh
   end
 
   def setUpTheBoard (gameType = :OttoNToot, virtual_player = false)
@@ -101,6 +159,7 @@ class GameBoard
   end
 
   def update (positions, victory)
+
     positions.each_with_index do | x, xi |
       x.each_with_index do | y, yi |
           button = @builder.get_object("button[" + (xi*(x.length) + yi).to_s + "]")
@@ -133,5 +192,3 @@ class GameBoard
   end
 
 end
-
-GameBoard.new.show_glade()
