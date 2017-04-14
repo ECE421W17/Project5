@@ -43,7 +43,7 @@ class GameBoard
 
   def initialize(screen_name, database_ip, database_port, local_port)
     @screen_name = "a"
-    database_ip = "172.28.77.251"
+    database_ip = "172.31.0.174"
     database_port = 8080
     local_port = 8081
     launch_local_game_server(@screen_name, database_ip, database_port, local_port)
@@ -89,17 +89,19 @@ class GameBoard
 
   def menuitem3__activate(*args)
     alert "New Challenge Connect4"
-    ActiveUser.new(@client, :Connect4, @screen_name, lambda{|controller| @controller = controller
-                                                            @controller.add_view(self)}).show_glade()
+    ActiveUser.new(@client, :Connect4, @screen_name, lambda{|controller|
+      @controller = controller
+      @controller.add_view(self)
+    }).show_glade()
 
   end
 
   def menuitem6__activate(*args)
     alert "New Challenge OttoNToot"
-    ActiveUser.new(@client, :OttoNToot, @screen_name, lambda{|controller| @controller = controller
-      puts @controller.to_s
-      puts self.to_s
-                                                             @controller.add_view(self)}).show_glade()
+    ActiveUser.new(@client, :OttoNToot, @screen_name, lambda{|controller|
+      @controller = controller
+      @controller.add_view(self)
+    }).show_glade()
 
   end
 

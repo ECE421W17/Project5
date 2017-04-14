@@ -24,9 +24,10 @@ class Challenger < VR::ListView
   def refresh()
     model.clear
     data = @client.get_challenges
-    (0..data.length-1).each do |i|
+  
+    data.each do |key, value|
       row = model.append
-      row[id(:Challenger_ID)] = data[i][0]
+      row[id(:Challenger_ID)] = key
     end
   end
 
@@ -42,12 +43,12 @@ class Challenger < VR::ListView
   end
 
   def self__row_activated(*args)
-    return unless rows == selected_rows
+    return unless rows = selected_rows
     row = rows[0]
     if alert("Do you challenge #{row[:Challenger_ID]}?", :button_yes => "Yes", :button_no => "No", :parent => self)
       alert "Accept Challenge"
-    else
-      alert "Deny challenge"
+      @function.call(@client.accept_challenge(row[:Challenger_ID]))
+      @builder["window1"].destroy
     end
   end
 end
