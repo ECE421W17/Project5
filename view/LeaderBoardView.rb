@@ -71,6 +71,7 @@ class LeaderBoardView < VR::ListView
 
   def get_data
     rows = @client.top_players(@TextEntryTopNumberOfPlayer)
+    row
     # rows = []
     # rows << ["A", "0","0","0","0","1","1","1","1","2","2","2","2"]
     # rows << ["B", "1","1","1","1","2","2","2","2","3","3","3","3"]

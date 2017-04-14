@@ -104,8 +104,8 @@ class GamesDatabaseServerHandler
         res = @games_database.top_players(n)
 
         contains_non_nil_values = res.any? { |value| !value.nil? }
-
-        return contains_non_nil_values ? res : false
+        res
+        #return contains_non_nil_values ? res : false
     end
 
     def history(player)

@@ -428,7 +428,7 @@ class GameServerHandler
         return true
     end
 
-    def get_top_n_player(n)
+    def top_players(n)
         @games_database_server_handler_proxy.top_players(n)
     end
 

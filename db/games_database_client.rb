@@ -34,6 +34,11 @@ class GamesDatabaseClient
         return res == false ? nil : res
     end
 
+    def history(player)
+        res = @client_proxy.history(player)
+        res
+    end
+
     def _verify_initialize_pre_conditions(games_database_client_argument_hash)
         assert(games_database_client_argument_hash.has_key?(:games_database_server_ip),
             'No Game Server IP address specified')

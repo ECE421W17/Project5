@@ -115,11 +115,11 @@ class GameBoard
   end
 
   def leaderboardmenuitem__activate(*args)
-    LeaderBoardView.new(@database_client).show_glade(@client)
+    LeaderBoardView.new(@database_client).show_glade()
   end
 
   def historymenuitem__activate(*args)
-    History.new.show_glade()
+    History.new(@database_client, @screen_name).show_glade()
   end
 
   def quit__activate(*args)
