@@ -41,11 +41,11 @@ class GameBoard
   end
 
   def initialize(screen_name, database_ip, database_port, local_port)
-    screen_name = "a"
+    @screen_name = "a"
     database_ip = "172.28.77.251"
     database_port = 8080
     local_port = 8081
-    launch_local_game_server(screen_name, database_ip, database_port, local_port)
+    launch_local_game_server(@screen_name, database_ip, database_port, local_port)
 
     # TODO: Extract address to global scope
     # TODO: Wait for server to come up?...
@@ -86,14 +86,24 @@ class GameBoard
 
   def menuitem3__activate(*args)
     alert "New Challenge Connect4"
-    ActiveUser.new(@client).show_glade()
+    ActiveUser.new(@client, :Connect4, @screen_name, lambda{|controller| @controller = controller
+                                                            @controller.add_view(self)}).show_glade()
 
   end
 
   def menuitem6__activate(*args)
     alert "New Challenge OttoNToot"
-    ActiveUser.new(@client).show_glade()
+    ActiveUser.new(@client, :OttoNToot, @screen_name, lambda{|controller| @controller = controller
+                                                             @controller.add_view(self)}).show_glade()
 
+  end
+
+  def resumeMenuItem__activate(*args)
+    ResumeGameList.new.show_glade()
+  end
+
+  def challengeMenuItem__activate(*args)
+    Challenger.new.show_glade()
   end
 
   def leaderboardmenuitem__activate(*args)
@@ -106,22 +116,13 @@ class GameBoard
 
   def quit__activate(*args)
     if @local_server_pid
-      print "killing...\n"
       Process.kill('KILL', @local_server_pid)
     end
     @builder["window1"].destroy
   end
 
-  def resumeMenuItem__activate(*args)
-    ResumeGameList.new.show_glade()
-  end
-
   def refreshbutton__clicked(*args)
-    alert "Refresh game"
-  end
-
-  def challengeMenuItem__activate(*args)
-    Challenger.new.show_glade()
+      @controller.refresh
   end
 
   def setUpTheBoard (gameType = :OttoNToot, virtual_player = false)
@@ -158,6 +159,7 @@ class GameBoard
   end
 
   def update (positions, victory)
+
     positions.each_with_index do | x, xi |
       x.each_with_index do | y, yi |
           button = @builder.get_object("button[" + (xi*(x.length) + yi).to_s + "]")

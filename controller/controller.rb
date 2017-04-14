@@ -91,6 +91,7 @@ class Controller
         end
 
         @game.notify_observers(@game.get_board.positions, @game.winner)
+        puts "refreshing\n"
 
         _verify_refresh_postconditions
     end

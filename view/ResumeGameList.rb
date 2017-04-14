@@ -1,7 +1,7 @@
 require "vrlib"
 
 class ResumeGameList < VR::ListView
- 
+
   include GladeGUI
 
   def before_show()
@@ -18,7 +18,7 @@ class ResumeGameList < VR::ListView
     refresh()
     self.visible = true
   end
-  
+
   def refresh()
     model.clear
     data = get_data()
@@ -28,7 +28,7 @@ class ResumeGameList < VR::ListView
       row[id(:OppoentID)] = data[i][1]
     end
   end
-  
+
   def get_data
     row = []
     row << ["A", "User1"]
@@ -43,7 +43,6 @@ class ResumeGameList < VR::ListView
   def self__row_activated(*args)
     return unless rows = selected_rows
     row = rows[0]
-    alert "You select GameId #{row[:GameId]}, Oppoent #{row[:OppoentID]}}"
+    alert "You select GameId #{row[:GameId]}, Opponent #{row[:OppoentID]}}"
   end
 end
-
