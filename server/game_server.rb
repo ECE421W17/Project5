@@ -251,6 +251,10 @@ class GameServerHandler
         @games_database_server_handler_proxy.top_players(n)
     end
 
+    def history(player)
+        @games_database_server_handler_proxy.history(player)
+    end
+
     def process_accepted_challenge(other_screen_name)
         unless @outgoing_challenges.include? other_screen_name
             return false

@@ -70,6 +70,11 @@ class GamesDatabaseServerHandler
         return contains_non_nil_values ? res : false
     end
 
+    def history(player)
+        res = @games_database.history(player)
+        res
+    end
+
     def unregister_game_server(game_server_address)
         @games_database.remove_game_server(game_server_address)
 

@@ -13,11 +13,6 @@ class LeaderBoardView < VR::ListView
     @LeaderBoardUserID = 0
   end  
 
-  def initialize(client)
-    @client = client
-  end
-
-
   def refreshLeaderBoard__clicked(*args)
     get_glade_variables()
     refresh()
@@ -28,7 +23,8 @@ class LeaderBoardView < VR::ListView
     #       "Winning Percentage #{@LeaderBoardWinningPercentage} \n"\
     #       "UserID: #{@LeaderBoardUserID}"
   end 
-  def initialize 
+  def initialize(client)
+    @client = client
     @cols = {}
     @cols[:id] = String
     @cols[:score] = String    
