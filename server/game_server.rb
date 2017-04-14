@@ -5,6 +5,8 @@ require 'xmlrpc/server'
 require 'yaml'
 
 require_relative '../controller/controller'
+require_relative '../view/GameBoard'
+require_relative '../view/stub_view'
 
 include Test::Unit::Assertions
 
