@@ -16,16 +16,22 @@ class GameClient
     # TODO: Don't use hard-coded game type...
     def accept_challenge(screen_name)
         controller = YAML::load(@client_proxy.accept_challenge(screen_name))
-
         return controller == false ? nil : controller
     end
 
     def get_challenges
-        @client_proxy.get_incoming_challenges
+        res = @client_proxy.get_incoming_challenges
+        return res == false ? nil : res
     end
 
     def get_online_players
-        @client_proxy.get_online_players
+        res = @client_proxy.get_online_players
+        return res == false ? nil : res
+    end
+
+    def get_suspended_games
+        res = @client_proxy.get_suspended_games
+        return res == false ? nil : res
     end
 
     def issue_challenge(screen_name, game_type)
@@ -42,6 +48,11 @@ class GameClient
 
     def proxy(path)
         @client.proxy(path)
+    end
+
+    def resume_suspended_game(game_uuid)
+        controller = YAML::load(@client_proxy.resume_suspended_game(game_uuid))
+        return controller == false ? nil : controller
     end
 
     def _verify_initialize_pre_conditions(game_client_argument_hash)
