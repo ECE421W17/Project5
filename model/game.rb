@@ -72,6 +72,10 @@ class Game
         check_class_invariants
     end
 
+    def get_player_mode(player_rank)
+        @players[player_rank - 1].category
+    end
+
     def get_board
         @board
     end
@@ -106,6 +110,11 @@ class Game
         notify_observers(@board.positions, winner)
 
         make_move_post_cond
+    end
+
+    def notify
+        changed
+        notify_observers(@board.positions, winner)
     end
 
     def set_board(new_board)

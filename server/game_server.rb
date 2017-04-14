@@ -84,6 +84,52 @@ class RefreshClient
     end
 end
 
+# TODO: Remove; not needed
+class WriteFinishedGameClientFactory
+    def initialize(games_database_ip, games_database_port, game_server_ip, game_server_port)
+        @games_database_ip = games_database_ip
+        @games_database_port = games_database_port
+        @game_server_ip = game_server_ip
+        @game_server_port = game_server_port
+    end
+
+    def create_write_finished_game_client(game_uuid, player_1_screen_name, player_2_screen_name)
+        WriteFinishedGameClient.new(
+            @games_database_ip, @games_database_port, @game_server_ip, @game_server_port, game_uuid,
+                player_1_screen_name, player_2_screen_name)
+    end
+end
+
+class WriteFinishedGameClient
+    def initialize(games_database_ip, games_database_port, game_server_ip, game_server_port, game_uuid,
+            player_1_screen_name, player_2_screen_name)
+        @games_database_ip = games_database_ip
+        @games_database_port = games_database_port
+        @game_uuid = game_uuid
+        @player_1_screen_name = player_1_screen_name
+        @player_2_screen_name = player_2_screen_name
+
+        # TODO: Interact with the game server instead of the database server directly?
+        # NOTE: These parameters are unused otherwise
+        @game_server_ip = game_server_ip
+        @game_server_port = game_server_port
+    end
+
+    def write_game(game_uuid, game)
+        games_database_client = XMLRPC::Client.new3(
+            {:host => @games_database_ip, :port => @games_database_port})
+
+        serialized_game = YAML::dump(game)
+
+        # result = games_database_client.call("gamesDatabaseServerHandler.get_game", @game_uuid)
+
+        games_database_client.call("gamesDatabaseServerHandler.save_game", @game_uuid, serialized_game,
+            @player_1_screen_name, @player_2_screen_name)
+
+        games_database_client.call("gamesDatabaseServerHandler.delete_game", @game_uuid)
+    end
+end
+
 # Just a stub object to get things to work
 class MockView
     def update(positions, victory)
@@ -95,11 +141,13 @@ class GameServerHandler
     # *****
     # Local functions:
     def initialize(
-        games_database_client, player_move_observer_factory, refresh_client_factory, screen_name)
+        games_database_client, player_move_observer_factory, refresh_client_factory,
+        write_finished_game_client_factory, screen_name)
         _verify_initialize_pre_conditions(screen_name)
         
         @player_move_observer_factory = player_move_observer_factory
         @refresh_client_factory = refresh_client_factory
+        @write_finished_game_client_factory = write_finished_game_client_factory 
 
         @games_database_server_handler_proxy = games_database_client.proxy("gamesDatabaseServerHandler")
         @local_screen_name = screen_name
@@ -141,17 +189,25 @@ class GameServerHandler
                         game_type = @incoming_challenges[other_screen_name][:game_type]
 
                         mv = MockView.new
-                        controller = Controller.new([mv], game_type, :TWO_PLAYER, 1)
+                        controller = Controller.new([mv], game_type, :TWO_PLAYER, 1, game_uuid)
 
                         player_move_observer = @player_move_observer_factory
-                            .create_player_move_observer(game_uuid, @local_screen_name, other_screen_name)
+                            .create_player_move_observer(
+                                game_uuid, @local_screen_name, other_screen_name)
                         controller.set_player_move_observer(player_move_observer)
 
                         refresh_client = @refresh_client_factory.create_refresh_client(game_uuid)
                         controller.set_refresh_client(refresh_client)
+
+                        write_finished_game_client = @write_finished_game_client_factory
+                            .create_write_finished_game_client(game_uuid, @local_screen_name,
+                                other_screen_name)
+                        controller.set_write_finished_game_client(write_finished_game_client)
                     else
                         suspended_games = get_suspended_games
-                        filtered_suspended_games = suspended_games.select { |suspended_game| suspended_game['uuid'] == game_uuid }
+                        filtered_suspended_games = suspended_games.select { |suspended_game|
+                            suspended_game['uuid'] == game_uuid
+                        }
 
                         if filtered_suspended_games.empty?
                             return false
@@ -162,10 +218,12 @@ class GameServerHandler
                         game = YAML::load(suspended_game['serialized_game'])
                         game_type = suspended_game['game_type']
                         local_player_rank = @local_screen_name == suspended_game['p1'] ? 1 : 2 
-                        next_player_rank = suspended_game['next_player_to_move'] == suspended_game['p1'] ? 1 : 2
+                        next_player_rank =
+                            suspended_game['next_player_to_move'] == suspended_game['p1'] ? 1 : 2
 
                         mv = MockView.new
-                        controller = Controller.new([mv], game_type, :TWO_PLAYER, local_player_rank)
+                        controller = Controller.new([mv], game_type, :TWO_PLAYER, local_player_rank,
+                            game_uuid)
 
                         player_move_observer = @player_move_observer_factory
                             .create_player_move_observer(
@@ -174,6 +232,11 @@ class GameServerHandler
 
                         refresh_client = @refresh_client_factory.create_refresh_client(game_uuid)
                         controller.set_refresh_client(refresh_client)
+
+                        write_finished_game_client = @write_finished_game_client_factory
+                            .create_write_finished_game_client(game_uuid, suspended_game['p1'],
+                                suspended_game['p2'])
+                        controller.set_write_finished_game_client(write_finished_game_client)
 
                         controller.set_game(game)
                         controller.set_next_player_rank(next_player_rank)
@@ -218,7 +281,9 @@ class GameServerHandler
                     @outgoing_challenges.push(screen_name)
 
                     mv = MockView.new
-                    controller = Controller.new([mv], game_type, :TWO_PLAYER, 2)
+
+                    # TODO: Convert game type to_sym
+                    controller = Controller.new([mv], game_type, :TWO_PLAYER, 2, game_uuid)
 
                     player_move_observer = @player_move_observer_factory
                         .create_player_move_observer(game_uuid, screen_name, @local_screen_name)
@@ -226,6 +291,11 @@ class GameServerHandler
 
                     refresh_client = @refresh_client_factory.create_refresh_client(game_uuid)
                     controller.set_refresh_client(refresh_client)
+
+                    write_finished_game_client = @write_finished_game_client_factory
+                        .create_write_finished_game_client(game_uuid, screen_name,
+                            @local_screen_name)
+                    controller.set_write_finished_game_client(write_finished_game_client)
 
                     break
                 end
@@ -309,7 +379,8 @@ class GameServerHandler
                     @outgoing_challenges.push(other_screen_name)
 
                     mv = MockView.new
-                    controller = Controller.new([mv], game_type, :TWO_PLAYER, local_player_rank)
+                    controller = Controller.new([mv], game_type, :TWO_PLAYER, local_player_rank,
+                        game_uuid)
 
                     player_move_observer = @player_move_observer_factory
                         .create_player_move_observer(game_uuid, suspended_game['p1'],
@@ -318,6 +389,11 @@ class GameServerHandler
 
                     refresh_client = @refresh_client_factory.create_refresh_client(game_uuid)
                     controller.set_refresh_client(refresh_client)
+
+                    write_finished_game_client = @write_finished_game_client_factory
+                        .create_write_finished_game_client(game_uuid, suspended_game['p1'],
+                            suspended_game['p2'])
+                    controller.set_write_finished_game_client(write_finished_game_client)
 
                     controller.set_game(game)
                     controller.set_next_player_rank(next_player_rank)
@@ -422,9 +498,12 @@ class GameServer
         player_move_observer_factory = PlayerMoveObserverFactory.new(
             games_database_ip, games_database_port, @game_server_ip, @game_server_port)
         refresh_client_factory = RefreshClientFactory.new(@game_server_ip, @game_server_port)
+        write_finished_game_client_factory = WriteFinishedGameClientFactory.new(
+            games_database_ip, games_database_port, @game_server_ip, @game_server_port)
 
         server_handler = GameServerHandler.new(
-            @games_database_client, player_move_observer_factory, refresh_client_factory, screen_name)
+            @games_database_client, player_move_observer_factory, refresh_client_factory,
+                write_finished_game_client_factory, screen_name)
 
         @server = XMLRPC::Server.new(@game_server_port, @game_server_ip)
         @server.add_handler(
