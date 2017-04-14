@@ -1,5 +1,8 @@
 require 'xmlrpc/client'
 
+require_relative '../view/GameBoard'
+require_relative '../view/stub_view'
+
 class GameClient
     def initialize(game_client_argument_hash)
         _verify_initialize_pre_conditions(game_client_argument_hash)

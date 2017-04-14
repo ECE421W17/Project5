@@ -7,21 +7,7 @@ require_relative '../db/games_database_client' # TODO: Remove?
 require_relative 'game_client'
 require_relative 'game_server'
 
-class StubView
-    def initialize(player_mode)
-        @player_mode = player_mode
-    end
-
-    def update(positions, victory)
-        if victory != nil
-            if victory.get_winner.category == @player_mode
-                puts 'Congratulations!!!! You won!!!'
-            else
-                puts 'Sorry!! You lost :('
-            end
-        end
-    end
-end
+require_relative '../view/stub_view'
 
 class CLI
     def initialize(screen_name, games_database_server_ip, games_database_server_port, game_server_port)

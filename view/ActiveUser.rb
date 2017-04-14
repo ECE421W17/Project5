@@ -43,7 +43,7 @@ class ActiveUser < VR::ListView
   end
 
   def refreshActiveUser__clicked(*args)
-    alert "refresh"
+    refresh
   end
 
 end

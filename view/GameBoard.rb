@@ -13,6 +13,7 @@ require 'yaml' # TODO: Remove?
 
 require_relative '../server/game_client'
 require_relative '../server/game_server'
+require_relative '../db/games_database_client'
 
 class GameBoard
 
@@ -55,6 +56,8 @@ class GameBoard
 
     @client = GameClient.new(
         {:game_server_ip => @local_ip_address, :game_server_port => local_port})
+    @database_client = GamesDatabaseClient.new(
+        {:games_database_server_ip=>database_ip, :games_database_server_port=>database_port})
   end
 
   def launch_local_game_server(screen_name, games_database_server_ip, games_database_server_port, game_server_port)
@@ -103,15 +106,16 @@ class GameBoard
   end
 
   def challengeMenuItem__activate(*args)
-    Challenger.new.show_glade()
+    Challenger.new(@client, @screen_name, lambda{|controller| @controller = controller
+                                                 @controller.add_view(self)}).show_glade()
   end
 
   def leaderboardmenuitem__activate(*args)
-    LeaderBoardView.new(@client).show_glade()
+    LeaderBoardView.new(@database_client).show_glade()
   end
 
   def historymenuitem__activate(*args)
-    History.new(@client, @screen_name).show_glade()
+    History.new(@database_client, @screen_name).show_glade()
   end
 
   def quit__activate(*args)
