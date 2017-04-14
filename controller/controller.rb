@@ -16,7 +16,7 @@ class Controller
         assert(@game, 'The controller must have a game')
     end
 
-    def initialize(views, game_type, game_mode, player_rank, game_uuid)
+    def initialize(views, game_type, game_mode, player_rank, game_uuid = nil)
         _verify_initialize_preconditions(game_mode, player_rank)
 
         @game_mode = game_mode
