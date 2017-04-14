@@ -107,7 +107,7 @@ class GameBoard
   end
 
   def leaderboardmenuitem__activate(*args)
-    LeaderBoardView.new.show_glade()
+    LeaderBoardView.new.show_glade(@client)
   end
 
   def historymenuitem__activate(*args)
